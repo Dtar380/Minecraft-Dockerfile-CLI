@@ -1,0 +1,61 @@
+services:
+{% for name, svc in services.items() %}
+  {{ name }}:
+    build:
+      context: {{ svc.build.context }}
+      dockerfile: Dockerfile
+    env_file:
+      - {{ svc.env_file }}
+    container_name: {{name}}
+    environment:
+      - CONTAINER_NAME=${CONTAINER_NAME}
+      - SERVER_JAR=${SERVER_JAR}
+      - JAVA_ARGS=${JAVA_ARGS}
+      - MIN_HEAP_SIZE=${MIN_HEAP_SIZE}
+      - MAX_HEAP_SIZE=${MAX_HEAP_SIZE}
+      - TYPE=${TYPE}
+    volumes:
+      - {{ svc.volume }}
+{% if svc.ports is defined %}
+    ports:
+{% for p in svc.ports %}
+      - "{{ p }}"
+{% endfor %}
+{% endif %}
+{% if svc.expose is defined %}
+    expose:
+{% for e in svc.expose %}
+      - {{ e }}
+{% endfor %}
+{% endif %}
+{% if svc.networks is defined %}
+    networks:
+{% for n in svc.networks %}
+      - {{ n }}
+{% endfor %}
+{% endif %}
+{% if svc.resources is defined %}
+    deploy:
+      resources:
+{% if svc.resources.limits is defined %}
+        limits:
+{% for k, v in svc.resources.limits.items() %}
+          {{ k }}: {{ v }}
+{% endfor %}
+{% endif %}
+{% if svc.resources.reservations is defined %}
+        reservations:
+{% for k, v in svc.resources.reservations.items() %}
+          {{ k }}: {{ v }}
+{% endfor %}
+{% endif %}
+{% endif %}
+
+    restart: unless-stopped
+{% endfor %}
+
+networks:
+{% for net_name in networks}
+  {{ net_name }}:
+    driver: bridge
+{% endfor %}

@@ -1,0 +1,7 @@
+-XX:+UseG1GC
+-XX:+ParallelRefProcEnabled
+-XX:+AlwaysPreTouch
+-XX:+DisableExplicitGC
+-XX:+PerfDisableSharedMem
+-XX:MaxGCPauseMillis=200
+-XX:InitiatingHeapOccupancyPercent=15
