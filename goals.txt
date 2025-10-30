@@ -1,0 +1,14 @@
+The app must be able to:
+ - Create servers and networks with highly customizable containers
+ - Update, Backup and delete said containers
+ - Stop and start the containers
+
+The app must have:
+ - Inline command support
+ - UI with menus for easier navigation and setup for users non accustomed with cli's
+
+The app must meet:
+ - Clean code
+ - Organized code
+ - Consistent code base
+(Use mypy, isort, black)
