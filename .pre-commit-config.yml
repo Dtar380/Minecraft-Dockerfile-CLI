@@ -1,0 +1,46 @@
+# Pre-commit hooks para mantener calidad de código
+repos:
+  # Black - formateo de código
+  - repo: https://github.com/psf/black
+    rev: 25.1.0
+    hooks:
+      - id: black
+        language_version: python3.13
+
+  # isort - ordenamiento de imports
+  - repo: https://github.com/pycqa/isort
+    rev: 6.0.1
+    hooks:
+      - id: isort
+        args: ["--profile", "black"]
+
+  # flake8 - linting
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.2.0
+    hooks:
+      - id: flake8
+        additional_dependencies: [flake8-bugbear]
+        args: ["--config=./backend/.flake8"]
+
+  # mypy - verificación de tipos
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.16.0
+    hooks:
+      - id: mypy
+        additional_dependencies: [
+          jinja2,
+          inquirer,
+          yaspin,
+          click,
+        ]
+        args: [--config-file=./backend/pyproject.toml]
+
+  # Hooks básicos de git
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-merge-conflict
