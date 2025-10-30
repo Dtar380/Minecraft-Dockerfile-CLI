@@ -12,3 +12,16 @@ The app must meet:
  - Organized code
  - Consistent code base
 (Use mypy, isort, black)
+
+
+A project would look like this:
++---docker-compose.yml
++---README.md
++---config
+|   +---composer.json
+|   +---envs.json
+\---servers
+    \---server1
+        +---.env
+        +---Dockerfile
+        \---MINECRAFT FILES

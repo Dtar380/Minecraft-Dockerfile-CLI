@@ -1,9 +1,11 @@
 # Security Policies
 
 ## Index
-- [**Our Policy**](#our-policy)
-- [**Supported Versions**](#supported-versions)
-- [**Reporting a Vulnerability**](#reporting-a-vulnerability)
+- [Security Policies](#security-policies)
+  - [Index](#index)
+  - [Our Policy](#our-policy)
+  - [Supported Versions](#supported-versions)
+  - [Reporting a Vulnerability](#reporting-a-vulnerability)
 
 ## Our Policy
 Security is always the 1st priority when developing software, thats why our compromise with your security is on top of anything.
@@ -20,4 +22,4 @@ Support is given accordingly to the CVSS 3.0 security ratings. Here is a chart:
 | Low              | Latest release only               |
 
 ## Reporting a Vulnerability
-To report a (suspected) vulnerability, go to [create issue](https://github.com/Dtar380/WorkspaceAutomation/issues/new/choose) and select the `Report a security vulnerability` template. A contributor will be with you within 48 hours and if the issue is confirmed we will release a patch ASAP. The time to patch any vulnerability will always depend on how complex is the issue and if there are any other vulnerabilities reported of higher level, but usually a patch will be released in less than a week.
+To report a (suspected) vulnerability, go to [create issue](https://github.com/Dtar380/Minecraft-Dockerfile-CLI/issues/new/choose) and select the `Report a security vulnerability` template. A contributor will be with you within 48 hours and if the issue is confirmed we will release a patch ASAP. The time to patch any vulnerability will always depend on how complex is the issue and if there are any other vulnerabilities reported of higher level, but usually a patch will be released in less than a week.
