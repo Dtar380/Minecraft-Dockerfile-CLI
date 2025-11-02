@@ -1,10 +1,13 @@
+from __future__ import annotations
+
 import inspect
 
-from click import Command, Option
 from InquirerPy import inquirer
 from InquirerPy.validator import EmptyInputValidator
+from click import Command, Option
 
 from .custom_group import CustomGroup
+from ..utils.cli import clear
 
 
 class Builder(CustomGroup):
@@ -15,33 +18,29 @@ class Builder(CustomGroup):
     def create(self) -> Command:
 
         help = ""
-        options = [
-            Option()
-        ]
+        options = [Option()]
 
         def callback() -> None:
             pass
 
         return Command(
-            name=inspect.currentframe().f_code.co_name, # type: ignore
+            name=inspect.currentframe().f_code.co_name,  # type: ignore
             help=help,
             callback=callback,
-            params=options # type: ignore
+            params=options,  # type: ignore
         )
-    
+
     def update(self) -> Command:
 
         help = ""
-        options = [
-            Option()
-        ]
+        options = [Option()]
 
         def callback() -> None:
             pass
 
         return Command(
-            name = inspect.currentframe().f_code.co_name, # type: ignore
+            name=inspect.currentframe().f_code.co_name,  # type: ignore
             help=help,
             callback=callback,
-            params=options # type: ignore
+            params=options,  # type: ignore
         )

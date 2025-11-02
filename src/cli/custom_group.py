@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import inspect
 
-from click import Group, Command
+from click import Command, Group
 
 
 class CustomGroup(Group):

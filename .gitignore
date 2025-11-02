@@ -218,3 +218,4 @@ __marimo__/
 
 # Files and directories non related to python
 .secrets
+pre-commit
