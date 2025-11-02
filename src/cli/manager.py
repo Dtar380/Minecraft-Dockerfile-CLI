@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import inspect
 
-from InquirerPy import inquirer
-from InquirerPy.validator import EmptyInputValidator
+from InquirerPy import inquirer  # type: ignore
+from InquirerPy.validator import EmptyInputValidator  # type: ignore
 from click import Command, Option
 
+from ..utils.cli import clear  # type: ignore
 from .custom_group import CustomGroup
-from ..utils.cli import clear
 
 
 class Manager(CustomGroup):

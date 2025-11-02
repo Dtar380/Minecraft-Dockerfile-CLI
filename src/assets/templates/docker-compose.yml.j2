@@ -1,12 +1,12 @@
 services:
-{% for name, svc in services.items() %}
-  {{ name }}:
+{% for svc in services %}
+  {{ svc.name }}:
     build:
       context: {{ svc.build.context }}
       dockerfile: Dockerfile
     env_file:
       - {{ svc.env_file }}
-    container_name: {{name}}
+    container_name: {{ svc.name }}
     environment:
       - CONTAINER_NAME=${CONTAINER_NAME}
       - SERVER_JAR=${SERVER_JAR}

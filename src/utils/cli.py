@@ -1,4 +1,6 @@
-from os import system, name
+from __future__ import annotations
+
+from os import name, system
 from time import sleep
 
 

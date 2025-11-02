@@ -1,0 +1,53 @@
+{
+  "compose": {
+    "services": [
+      {
+        "name": "server",
+        "build": {
+          "context": "./servers/server/"
+        },
+        "env_file": ".env.server",
+        "volume": "./servers/server:/server",
+        "ports": [
+          "${HOST_PORT}:25565"
+        ],
+        "expose": [
+          25565
+        ],
+        "networks": [
+          "mc-network"
+        ],
+        "resources": {
+          "limits": {
+            "cpus": 1,
+            "memory": 1
+          },
+          "reservations": {
+            "cpus": 1,
+            "memory": 1
+          }
+        }
+      }
+    ],
+    "networks": [
+      "mc-network" 
+    ]
+  },
+  "envs": [
+    {
+      "CONTAINER_NAME": "server",
+      "SERVER_JAR": "",
+      "JAVA_ARGS": "",
+      "MIN_HEAP_SIZE": "",
+      "MAX_HEAP_SIZE": "",
+      "TYPE": "",
+      "HOST_PORTS": {
+        "HOST_PORT": 25565
+      },
+      "CPU_LIMIT": 1,
+      "MEMORY_LIMIT": 1,
+      "CPU_RESERVATION": 1,
+      "MEMORY_RESERVATION": 1
+    }
+  ]
+}
