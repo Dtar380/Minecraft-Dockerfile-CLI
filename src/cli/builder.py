@@ -13,12 +13,15 @@ from .custom_group import CustomGroup
 
 class Menus:
 
-    # Construct service contents for docker-compose
-    def service(self) -> dict[str, Any]:
-        return {}
+    def __init__(
+        self, network: str | None = None, update: bool = False
+    ) -> None:
+        self.network = network
+        self.update = update
 
-    def __get_name(self) -> str:
-        return ""
+    # Construct service contents for docker-compose
+    def service(self, name: str) -> dict[str, Any]:
+        return {}
 
     def __get_ports(self) -> str:
         return ""
@@ -26,7 +29,7 @@ class Menus:
     def __expose(self) -> bool:
         return True
 
-    def __resources(self) -> dict[str, int]:
+    def __resources(self) -> dict[str, Any]:
         return {}
 
     # Construct env file contents
@@ -50,15 +53,14 @@ class Builder(CustomGroup):
 
     def __init__(self) -> None:
         super().__init__()
-        self.menus = Menus()
 
     def create(self) -> Command:
 
         help = ""
         options = [Option()]
 
-        def callback() -> None:
-            pass
+        def callback() -> dict[str, Any]:
+            return {}
 
         return Command(
             name=inspect.currentframe().f_code.co_name,  # type: ignore
@@ -72,8 +74,8 @@ class Builder(CustomGroup):
         help = ""
         options = [Option()]
 
-        def callback() -> None:
-            pass
+        def callback() -> dict[str, Any]:
+            return {}
 
         return Command(
             name=inspect.currentframe().f_code.co_name,  # type: ignore

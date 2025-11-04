@@ -6,7 +6,7 @@
         "build": {
           "context": "./servers/server/"
         },
-        "env_file": ".env.server",
+        "env_file": "./servers/server/.env",
         "volume": "./servers/server:/server",
         "ports": [
           "${HOST_PORT}:${HOST_PORT}"
@@ -20,11 +20,11 @@
         "resources": {
           "limits": {
             "cpus": 1,
-            "memory": 1
+            "memory": "1g"
           },
           "reservations": {
             "cpus": 1,
-            "memory": 1
+            "memory": "1g"
           }
         }
       }
@@ -40,7 +40,6 @@
       "JAVA_ARGS": "",
       "MIN_HEAP_SIZE": "",
       "MAX_HEAP_SIZE": "",
-      "TYPE": "",
       "HOST_PORTS": {
         "HOST_PORT": 25565
       }

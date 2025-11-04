@@ -13,7 +13,7 @@ MAX_RAM=${MAX_HEAP_SIZE:-TOTAL_MEM_MB} # Defaulted to total ram on the container
 # Ascii art to give admins a peek at what happens
 echo "─╤═════════╡ *** MINECRAFT SERVER *** ╞══════════─"
 echo " │"
-echo " ├─ SERVER TYPE: ${TYPE}"
+echo " ├─ SERVER NAME: ${CONTAINER_NAME}"
 echo " ├─ TOTAL RAM: ${TOTAL_MEM_MB}MB"
 echo " ├─ ALLOCATED RAM: -Xmx${MAX_RAM}M -Xms${MIN_RAM}M"
 echo " └─ JAVA ARGS: ${JAVA_ARGS}"
