@@ -12,7 +12,7 @@
           "${HOST_PORT}:${HOST_PORT}"
         ],
         "expose": [
-          25565
+          "${HOST_PORT}"
         ],
         "networks": [
           "mc-network"
