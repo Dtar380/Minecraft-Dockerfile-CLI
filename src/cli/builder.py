@@ -9,7 +9,8 @@ from InquirerPy.validator import EmptyInputValidator  # type: ignore
 from click import Command, Option
 from yaspin import yaspin  # type: ignore
 
-from ..core.manage_json import read_json, write_json  # type: ignore
+from ..core.copy_files import *
+from ..core.manage_json import read_json, write_json
 from ..core.manage_templates import template_to_file
 from ..utils.cli import clear, confirm
 from .custom_group import CustomGroup
@@ -22,15 +23,17 @@ class Builder(CustomGroup):
         super().__init__()
 
     def create(self) -> Command:
-        help = ""
+        help = (
+            "Create all files for the containerization of the server/network."
+        )
         options = [Option(["--network"], is_flag=True, default=False)]
 
         def callback(network: bool = False) -> None:
+            clear(0)
+
             services: set[dict[str, Any]] = set([])
             networks: set[str] = set([])
             envs: set[dict[str, Any]] = set([])
-
-            clear(0)
 
             if not network:
                 menu = Menus()
@@ -53,13 +56,14 @@ class Builder(CustomGroup):
                     services.add(service)
                     envs.add(env)
 
-                    clear(1)
+                    clear(0.5)
 
                     if not confirm(
                         msg=f"Want to continue adding services? (Count: {len(services)})",
                     ):
                         break
 
+            clear(0)
             self.__save_files(
                 data={
                     "compose": {
@@ -69,6 +73,8 @@ class Builder(CustomGroup):
                     "envs": envs,
                 }
             )
+            clear(0)
+            print("Files saved!")
 
         return Command(
             name=inspect.currentframe().f_code.co_name,  # type: ignore
@@ -78,11 +84,71 @@ class Builder(CustomGroup):
         )
 
     def update(self) -> Command:
-        help = ""
-        options = [Option()]
+        help = "Update the contents of the containers."
+        options = [
+            Option(["--service"], default=None),
+            Option(["--add"], is_flag=True, default=False),
+            Option(["--remove"], is_flag=True, default=False),
+        ]
 
-        def callback() -> None:
-            pass
+        def callback(
+            service: str | None = None, add: bool = False, remove: bool = False
+        ) -> None:
+            clear(0)
+
+            path: Path = Path()
+
+            if not path.exists():
+                print("Missing JSON file for services. Use 'create' first.")
+                return
+
+            data: dict[str, Any] = read_json(Path()) or {}
+            compose: dict[str, Any] = data.get("compose", {}) or {}
+
+            services: set[dict[str, Any]] = set(compose.get("services", []))
+            networks: set[str] = set(compose.get("networks", []))
+            envs: set[dict[str, Any]] = set(data.get("envs", []))
+
+            if networks:
+                pass
+            if envs:
+                pass
+
+            if not services:
+                print("No services found. Use 'create' first.")
+                return
+
+        return Command(
+            name=inspect.currentframe().f_code.co_name,  # type: ignore
+            help=help,
+            callback=callback,
+            params=options,  # type: ignore
+        )
+
+    def build(self) -> Command:
+        help = "Build the files for the containerization in case create failed."
+        options: list[Option] = []
+
+        def callback(
+            service: str | None = None, add: bool = False, remove: bool = False
+        ) -> None:
+            clear(0)
+
+            path: Path = Path()
+
+            if not path.exists():
+                print("Missing JSON file for services. Use 'create' first.")
+                return
+
+            data: dict[str, Any] = read_json(Path()) or {}
+
+            if not data:
+                print("JSON file is empty. Use 'create' first.")
+
+            clear(0)
+            self.__save_files(data, build=True)
+            clear(0)
+            print("Files saved!")
 
         return Command(
             name=inspect.currentframe().f_code.co_name,  # type: ignore
@@ -94,7 +160,7 @@ class Builder(CustomGroup):
     def __get_data(
         self, menu: Menus, get_service: bool = True, get_env: bool = True
     ) -> tuple[dict[str, Any], dict[str, Any]]:
-        clear(1)
+        clear(0.5)
 
         name = self.__get_name(message="Enter the name of the service: ")
 
@@ -110,6 +176,7 @@ class Builder(CustomGroup):
 
     def __get_name(self, message: str) -> str:
         while True:
+            clear(0.5)
             name: str = inquirer.text(  # type: ignore
                 message=message, validate=EmptyInputValidator()
             ).execute()
@@ -119,8 +186,10 @@ class Builder(CustomGroup):
 
         return name
 
-    def __save_files(self, data: dict[str, Any]) -> None:
-        write_json(Path(), data)
+    @yaspin(text="Creating files...", color="cyan")
+    def __save_files(self, data: dict[str, Any], build: bool = False) -> None:
+        if not build:
+            write_json(Path(), data)
 
         composer: dict[str, Any] = data.get("composer") or {}
         template_to_file(Path(), composer, Path())

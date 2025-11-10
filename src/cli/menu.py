@@ -65,7 +65,7 @@ class Menus:
 
     def __get_ports(self) -> None:
         while True:
-            clear(1)
+            clear(0.5)
 
             port_name = inquirer.text(  # type: ignore
                 message="Add a name for the port: ",
@@ -92,7 +92,7 @@ class Menus:
         expose: set[str] = set()
 
         for name, port in self.ports.items():
-            clear(1)
+            clear(0.5)
 
             if confirm(msg=f"Want to expose {name} assigned to {port}? "):
                 expose.add(f"${{{name}}}")
@@ -101,6 +101,8 @@ class Menus:
 
     def __resources(self) -> None:
         while True:
+            clear(0.5)
+
             cpus_limit: float = inquirer.number(  # type: ignore
                 message="Select a limit of CPUs for this service: ",
                 min_allowed=0,
@@ -162,6 +164,8 @@ class Menus:
 
     def __get_jar(self) -> str:
         while True:
+            clear(0.5)
+
             jar: str = inquirer.text(  # type: ignore
                 message="Enter your .jar file name: ",
                 validate=EmptyInputValidator(),
@@ -173,6 +177,8 @@ class Menus:
         return jar
 
     def __use_args(self) -> str:
+        clear(0.5)
+
         if confirm(msg="Want to use recommended args for the server? "):
             with open("", "r+") as f:
                 data = " ".join(f.readlines())
@@ -181,6 +187,8 @@ class Menus:
 
     def __get_heaps(self) -> list[str]:
         while True:
+            clear(0.5)
+
             min_heap_size: int = int(
                 inquirer.number(  # type: ignore
                     message="Select the minimum heap size: ",

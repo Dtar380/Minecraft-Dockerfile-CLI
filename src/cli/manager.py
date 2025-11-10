@@ -6,7 +6,7 @@ from InquirerPy import inquirer  # type: ignore
 from InquirerPy.validator import EmptyInputValidator  # type: ignore
 from click import Command, Option
 
-from ..utils.cli import clear  # type: ignore
+from ..utils.cli import clear, confirm  # type: ignore
 from .custom_group import CustomGroup
 
 
@@ -15,9 +15,9 @@ class Manager(CustomGroup):
     def __init__(self) -> None:
         super().__init__()
 
-    def bakcup(self) -> Command:
+    def backup(self) -> Command:
 
-        help = ""
+        help = "Create a backup of the files inside the containers to their respective build directories."
         options = [Option()]
 
         def callback() -> None:
@@ -32,7 +32,7 @@ class Manager(CustomGroup):
 
     def delete(self) -> Command:
 
-        help = ""
+        help = "Delete entirely the files related with the containerization of the server/network."
         options = [Option()]
 
         def callback() -> None:
@@ -47,7 +47,7 @@ class Manager(CustomGroup):
 
     def start(self) -> Command:
 
-        help = ""
+        help = "Start the services."
         options = [Option()]
 
         def callback() -> None:
@@ -62,7 +62,7 @@ class Manager(CustomGroup):
 
     def stop(self) -> Command:
 
-        help = ""
+        help = "Stop the services."
         options = [Option()]
 
         def callback() -> None:
