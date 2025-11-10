@@ -12,7 +12,16 @@ class CustomGroup(Group):
         self.__register_commands()
 
     def __register_commands(self) -> None:
-        for _, method in inspect.getmembers(self, predicate=inspect.ismethod):
-            result = method()
+        for name, method in inspect.getmembers(
+            self, predicate=inspect.ismethod
+        ):
+            if name.startswith("_"):
+                continue
+
+            try:
+                result = method()
+            except Exception:
+                continue
+
             if isinstance(result, Command):
                 self.add_command(result)

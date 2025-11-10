@@ -11,7 +11,7 @@ import psutil  # type: ignore
 
 from ..core.manage_json import read_json, write_json  # type: ignore
 from ..core.manage_templates import template_to_file
-from ..utils.cli import clear  # type: ignore
+from ..utils.cli import clear, confirm  # type: ignore
 from .custom_group import CustomGroup
 
 
@@ -29,7 +29,7 @@ class Menus:
         )
 
         self.ports: dict[str, int] = {}
-        self.resources: dict[str, int] = {}
+        self.resources: dict[str, Any] = {}
 
         if self.memory < 512:
             print("WARNING: RAM AMOUNT TOO LOW")
@@ -41,7 +41,15 @@ class Menus:
         expose = self.__expose()
         not_exposed = set([port for port in self.ports if port not in expose])
         ports = set([f"${{{port}}}:${{{port}}}" for port in not_exposed])
-        resources = self.__resources()
+        self.__resources()
+        resources = self.resources
+
+        resources["limits"]["memory"] = (
+            str(resources["limits"]["memory"] / 1024) + "g"
+        )
+        resources["reservations"]["memory"] = (
+            str(resources["reservations"]["memory"] / 1024) + "g"
+        )
 
         service: dict[str, Any] = {
             "name": name,
@@ -65,12 +73,12 @@ class Menus:
         while True:
             clear(1)
 
-            port_name = inquirer.text(
+            port_name = inquirer.text(  # type: ignore
                 message="Add a name for the port: ",
                 validate=EmptyInputValidator(),
             ).execute()
 
-            port = inquirer.number(
+            port = inquirer.number(  # type: ignore
                 message="Add port number: ",
                 min_allowed=1,
                 max_allowed=2**16 - 1,
@@ -78,16 +86,16 @@ class Menus:
                 validate=EmptyInputValidator(),
             ).execute()
 
-            if inquirer.confirm(
+            if inquirer.confirm(  # type: ignore
                 message=f"Want to add {port_name} assigned to port {port}? ",
                 default=False,
             ).execute():
                 self.ports[port_name] = port
 
-                if inquirer.confirm(
+                if inquirer.confirm(  # type: ignore
                     message="Want to add more ports? ", default=False
                 ).execute():
-                    break
+                    return None
 
     def __expose(self) -> set[str]:
         expose: set[str] = set()
@@ -95,7 +103,7 @@ class Menus:
         for name, port in self.ports.items():
             clear(1)
 
-            if inquirer.confirm(
+            if inquirer.confirm(  # type: ignore
                 message=f"Want to expose {name} assigned to {port}? ",
                 default=False,
             ).execute():
@@ -103,16 +111,16 @@ class Menus:
 
         return expose
 
-    def __resources(self) -> dict[str, Any]:
+    def __resources(self) -> None:
         while True:
-            cpus_limit: float = inquirer.number(
+            cpus_limit: float = inquirer.number(  # type: ignore
                 message="Select a limit of CPUs for this service: ",
                 min_allowed=0,
                 max_allowed=self.cpus,
                 float_allowed=True,
                 validate=EmptyInputValidator(),
             ).execute()
-            cpus_reservation: float = inquirer.number(
+            cpus_reservation: float = inquirer.number(  # type: ignore
                 message="Select a CPUs allocation for this service: ",
                 min_allowed=0,
                 max_allowed=cpus_limit,
@@ -120,14 +128,14 @@ class Menus:
                 validate=EmptyInputValidator(),
             ).execute()
 
-            memory_limit: float = inquirer.number(
+            memory_limit: float = inquirer.number(  # type: ignore
                 message="Select a limit of RAM for this service (in MB): ",
                 min_allowed=0,
                 max_allowed=self.memory,
                 float_allowed=True,
                 validate=EmptyInputValidator(),
             ).execute()
-            memory_reservation: float = inquirer.number(
+            memory_reservation: float = inquirer.number(  # type: ignore
                 message="Select a RAM allocation for this service (in MB): ",
                 min_allowed=0,
                 max_allowed=memory_limit,
@@ -135,7 +143,7 @@ class Menus:
                 validate=EmptyInputValidator(),
             ).execute()
 
-            if inquirer.confirm(
+            if inquirer.confirm(  # type: ignore
                 message="Confirm the RAM and CPU allocation for this service",
                 default=False,
             ).execute():
@@ -144,7 +152,7 @@ class Menus:
         self.cpus -= cpus_limit
         self.memory -= memory_limit
 
-        return {
+        self.resources = {
             "limits": {"cpus": cpus_limit, "memory": memory_limit},
             "reservations": {
                 "cpus": cpus_reservation,
@@ -154,16 +162,67 @@ class Menus:
 
     # Construct env file contents
     def env(self, name: str) -> dict[str, Any]:
-        return {}
+        heaps = self.__get_heaps()
+
+        return {
+            "CONTAINER_NAME": name,
+            "SEVER_JAR": self.__get_jar(),
+            "JAVA_ARGS": self.__use_args(),
+            "MIN_HEAP_SIZE": heaps[0],
+            "MAX_HEAP_SIZE": heaps[1],
+            "HOST_PORTS": self.ports,
+        }
 
     def __get_jar(self) -> str:
-        return ""
+        while True:
+            jar: str = inquirer.text(  # type: ignore
+                message="Enter your .jar file name: ",
+                validate=EmptyInputValidator(),
+            ).execute()
+
+            if inquirer.confirm(  # type: ignore
+                message=f"Confirm your jar file is {jar}", default=False
+            ).execute():
+                break
+
+        return jar
 
     def __use_args(self) -> str:
+        if inquirer.confirm(  # type: ignore
+            message="Want to use recommended args for the server? ",
+            default=False,
+        ).execute():
+            with open("", "r+") as f:
+                data = " ".join(f.readlines())
+            return data
         return ""
 
-    def __get_heaps(self) -> dict[str, str]:
-        return {}
+    def __get_heaps(self) -> list[str]:
+        while True:
+            min_heap_size: int = int(
+                inquirer.number(  # type: ignore
+                    message="Select the minimum heap size: ",
+                    min_allowed=self.resources["reservations"]["memory"],
+                    max_allowed=self.resources["limit"]["memory"],
+                    float_allowed=False,
+                ).execute()
+            )
+
+            max_heap_size: int = int(
+                inquirer.number(  # type: ignore
+                    message="Select the minimum heap size: ",
+                    min_allowed=min_heap_size,
+                    max_allowed=self.resources["limit"]["memory"],
+                    float_allowed=False,
+                ).execute()
+            )
+
+            if inquirer.confirm(  # type: ignore
+                message="Confirm Heap allocations", default=False
+            ).execute():
+                break
+
+        return [f"{min_heap_size}M", f"{max_heap_size}M"]
 
 
 class Builder(CustomGroup):
@@ -180,7 +239,7 @@ class Builder(CustomGroup):
             networks: set[str] = set([])
             envs: set[dict[str, Any]] = set([])
 
-            clear(1)
+            clear(0)
 
             if not network:
                 menu = Menus()
@@ -205,7 +264,7 @@ class Builder(CustomGroup):
 
                     clear(1)
 
-                    if not inquirer.confirm(
+                    if not inquirer.confirm(  # type: ignore
                         message=f"Want to continue adding services? (Count: {len(services)})",
                         default=False,
                     ).execute():
@@ -261,17 +320,17 @@ class Builder(CustomGroup):
 
     def __get_name(self, message: str) -> str:
         while True:
-            name = inquirer.text(
+            name: str = inquirer.text(  # type: ignore
                 message=message, validate=EmptyInputValidator()
             ).execute()
 
-            if inquirer.confirm(
-                message=f"Want to name this service {name}? ",
+            if inquirer.confirm(  # type: ignore
+                message=f"Want to name this service '{name}'? ",
                 default=False,
             ).execute():
                 break
 
-        return str(name)
+        return name
 
     def __save_files(self, data: dict[str, Any]) -> None:
         write_json(Path(), data)
