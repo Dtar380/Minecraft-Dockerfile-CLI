@@ -102,7 +102,7 @@ class Builder(CustomGroup):
                 print("Missing JSON file for services. Use 'create' first.")
                 return
 
-            data: dict[str, Any] = read_json(Path()) or {}
+            data: dict[str, Any] = read_json(path) or {}
             compose: dict[str, Any] = data.get("compose", {}) or {}
 
             services: set[dict[str, Any]] = set(compose.get("services", []))
