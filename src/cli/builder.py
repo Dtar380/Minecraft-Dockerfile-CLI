@@ -7,6 +7,7 @@ from typing import Any
 from InquirerPy import inquirer  # type: ignore
 from InquirerPy.validator import EmptyInputValidator  # type: ignore
 from click import Command, Option
+from importlib_resources import files  # type: ignore
 from yaspin import yaspin  # type: ignore
 
 from ..core.copy_files import copy_files  # type: ignore
@@ -15,6 +16,8 @@ from ..core.manage_templates import template_to_file
 from ..utils.cli import clear, confirm
 from .custom_group import CustomGroup
 from .menu import Menus
+
+dicts = dict[str, Any]
 
 
 class Builder(CustomGroup):
@@ -31,9 +34,9 @@ class Builder(CustomGroup):
         def callback(network: bool = False) -> None:
             clear(0)
 
-            services: set[dict[str, Any]] = set([])
+            services: set[dicts] = set([])
             networks: set[str] = set([])
-            envs: set[dict[str, Any]] = set([])
+            envs: set[dicts] = set([])
 
             if not network:
                 menu = Menus()
@@ -96,18 +99,18 @@ class Builder(CustomGroup):
         ) -> None:
             clear(0)
 
-            path: Path = Path()
+            path: Path = self.cwd.joinpath("data.json")
 
             if not path.exists():
                 print("Missing JSON file for services. Use 'create' first.")
                 return
 
-            data: dict[str, Any] = read_json(path) or {}
-            compose: dict[str, Any] = data.get("compose", {}) or {}
+            data: dicts = read_json(path) or {}
+            compose: dicts = data.get("compose", {}) or {}
 
-            services: set[dict[str, Any]] = set(compose.get("services", []))
+            services: set[dicts] = set(compose.get("services", []))
             networks: set[str] = set(compose.get("networks", []))
-            envs: set[dict[str, Any]] = set(data.get("envs", []))
+            envs: set[dicts] = set(data.get("envs", []))
 
             if networks:
                 pass
@@ -126,7 +129,7 @@ class Builder(CustomGroup):
         )
 
     def build(self) -> Command:
-        help = "Build the files for the containerization in case create failed."
+        help = "Build the files for the containerization."
         options: list[Option] = []
 
         def callback(
@@ -134,13 +137,13 @@ class Builder(CustomGroup):
         ) -> None:
             clear(0)
 
-            path: Path = Path()
+            path: Path = self.cwd.joinpath("data.json")
 
             if not path.exists():
                 print("Missing JSON file for services. Use 'create' first.")
                 return
 
-            data: dict[str, Any] = read_json(Path()) or {}
+            data: dicts = read_json(path) or {}
 
             if not data:
                 print("JSON file is empty. Use 'create' first.")
@@ -159,7 +162,7 @@ class Builder(CustomGroup):
 
     def __get_data(
         self, menu: Menus, get_service: bool = True, get_env: bool = True
-    ) -> tuple[dict[str, Any], dict[str, Any]]:
+    ) -> tuple[dicts, dicts]:
         clear(0.5)
 
         name = self.__get_name(message="Enter the name of the service: ")
@@ -187,14 +190,26 @@ class Builder(CustomGroup):
         return name
 
     @yaspin(text="Creating files...", color="cyan")
-    def __save_files(self, data: dict[str, Any], build: bool = False) -> None:
+    def __save_files(self, data: dicts, build: bool = False) -> None:
+        tmps_path = files("minecraft-docker-cli.assets.templates")
+        composer_template = tmps_path.joinpath("docker-compose.yml.j2")
+        env_template = tmps_path.joinpath(".env.j2")
+
         if not build:
-            write_json(Path(), data)
+            write_json(self.cwd.joinpath("data.json"), data)
 
-        composer: dict[str, Any] = data.get("composer") or {}
-        template_to_file(Path(), composer, Path())
+        composer: dicts = data.get("composer") or {}
+        template_to_file(
+            composer_template, composer, self.cwd.joinpath("docker-compose.yml")
+        )
 
-        envs: list[dict[str, Any]] = data.get("envs") or []
+        services: list[dicts] = composer.get("services", []) or []
+        names: list[str] = [service.get("name") for service in services]  # type: ignore
+        copy_files(self.cwd, names)
+
+        envs: list[dicts] = data.get("envs") or []
         for env in envs:
             relative_path = f"servers/{env.get("CONTAINER_NAME")}/.env"  # type: ignore
-            template_to_file(Path(), env, Path())
+            template_to_file(
+                env_template, env, self.cwd.joinpath(relative_path)
+            )

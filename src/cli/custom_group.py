@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import inspect
+from pathlib import Path
 
 from click import Command, Group
 
 
 class CustomGroup(Group):
+
+    cwd: Path = Path.cwd()
 
     def __init__(self) -> None:
         super().__init__()
