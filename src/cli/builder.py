@@ -196,4 +196,5 @@ class Builder(CustomGroup):
 
         envs: list[dict[str, Any]] = data.get("envs") or []
         for env in envs:
+            relative_path = f"servers/{env.get("CONTAINER_NAME")}/.env"  # type: ignore
             template_to_file(Path(), env, Path())
