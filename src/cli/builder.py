@@ -9,7 +9,7 @@ from InquirerPy.validator import EmptyInputValidator  # type: ignore
 from click import Command, Option
 from yaspin import yaspin  # type: ignore
 
-from ..core.copy_files import *
+from ..core.copy_files import copy_files  # type: ignore
 from ..core.manage_json import read_json, write_json
 from ..core.manage_templates import template_to_file
 from ..utils.cli import clear, confirm
