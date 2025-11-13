@@ -1,0 +1,37 @@
+# Minimal per-server .dockerignore for servers/{service_name}
+# Exclude runtime data that should not be part of the image
+
+# Worlds, maps, and generated data
+world/
+worlds/
+maps/
+region/
+DIM-*/       # possible dimension folders
+
+# Logs, backups, crash reports
+logs/
+*.log
+latest.log
+crash-reports/
+backups/
+*.zip
+*.tar
+*.tar.gz
+
+# Plugins, mods, resourcepacks and other large runtime assets
+plugins/
+mods/
+resourcepacks/
+schematics/
+cache/
+screenshots/
+
+# Local runtime state / locks
+*.pid
+*.lock
+*.jar
+.env
+
+# Keep the build files you explicitly need in the image
+!Dockerfile
+!run.sh

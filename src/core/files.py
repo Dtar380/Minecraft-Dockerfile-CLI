@@ -37,10 +37,10 @@ class FileManager:
             self.write_json(self.cwd.joinpath("data.json"), data)
 
         composer: dicts = data.get("composer") or {}
-        with as_file(composer_template) as composer_path:  # type: ignore
-            composer_path = cast(Path, composer_path)
+        with as_file(composer_template) as composer_tmp:  # type: ignore
+            composer_tmp = cast(Path, composer_tmp)
             self.template_to_file(
-                composer_path, composer, self.cwd.joinpath("docker-compose.yml")
+                composer_tmp, composer, self.cwd.joinpath("docker-compose.yml")
             )
 
         services: list[dicts] = composer.get("services", []) or []
@@ -50,10 +50,10 @@ class FileManager:
         envs: list[dicts] = data.get("envs") or []
         for env in envs:
             relative_path = f"servers/{env.get("CONTAINER_NAME")}/.env"  # type: ignore
-            with as_file(env_template) as env_path:  # type: ignore
-                env_path = cast(Path, env_path)
+            with as_file(env_template) as env_tmp:  # type: ignore
+                env_tmp = cast(Path, env_tmp)
                 self.template_to_file(
-                    env_path, env, self.cwd.joinpath(relative_path)
+                    env_tmp, env, self.cwd.joinpath(relative_path)
                 )
 
     @yaspin("Reading JSON...", color="cyan")

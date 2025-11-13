@@ -22,6 +22,8 @@ A project would look like this:
 |   +---envs.json
 \---servers
     \---server1
+        +---.dockerignore
         +---.env
         +---Dockerfile
+        +---run.sh
         \---MINECRAFT FILES

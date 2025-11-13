@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from importlib_resources import files  # type: ignore
 from InquirerPy import inquirer  # type: ignore
 from InquirerPy.validator import EmptyInputValidator  # type: ignore
 import psutil  # type: ignore
@@ -186,9 +187,10 @@ class Menus:
         clear(0.5)
 
         if confirm(msg="Want to use recommended args for the server? "):
-            with open("", "r+") as f:
-                data = " ".join(f.readlines())
-            return data
+            txt_file = files("minecraft-docker-cli.assets.config").joinpath("recomended-args.txt")
+            with open(txt_file, "r+") as f:
+                data = f.readlines()
+            return " ".join(data)
         return ""
 
     def __get_heaps(self) -> list[str]:
