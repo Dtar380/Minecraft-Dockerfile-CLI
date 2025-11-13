@@ -1,3 +1,6 @@
+#################################################
+# IMPORTS
+#################################################
 from __future__ import annotations
 
 import inspect
@@ -10,6 +13,9 @@ from ..core.docker import ComposeManager
 from .custom_group import CustomGroup
 
 
+#################################################
+# CODE
+#################################################
 class Manager(CustomGroup):
 
     def __init__(self) -> None:

@@ -1,3 +1,6 @@
+#################################################
+# IMPORTS
+#################################################
 from __future__ import annotations
 
 import inspect
@@ -6,6 +9,9 @@ from pathlib import Path
 from click import Command, Group
 
 
+#################################################
+# CODE
+#################################################
 class CustomGroup(Group):
 
     cwd: Path = Path.cwd()

@@ -1,3 +1,6 @@
+#################################################
+# IMPORTS
+#################################################
 from __future__ import annotations
 
 from pathlib import Path
@@ -10,6 +13,9 @@ from yaspin import yaspin
 from .files import FileManager
 
 
+#################################################
+# CODE
+#################################################
 class ComposeManager:
 
     def __init__(self) -> None:

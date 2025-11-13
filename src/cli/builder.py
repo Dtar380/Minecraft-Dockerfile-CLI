@@ -1,3 +1,6 @@
+#################################################
+# IMPORTS
+#################################################
 from __future__ import annotations
 
 import inspect
@@ -13,6 +16,9 @@ from ..utils.cli import clear, confirm
 from .custom_group import CustomGroup
 from .menu import Menus
 
+#################################################
+# CODE
+#################################################
 dicts = dict[str, Any]
 
 

@@ -1,3 +1,6 @@
+#################################################
+# IMPORTS
+#################################################
 from __future__ import annotations
 
 import json
@@ -8,14 +11,24 @@ from importlib_resources import as_file, files  # type: ignore
 import jinja2
 from yaspin import yaspin  # type: ignore
 
+#################################################
+# CODE
+#################################################
 dicts = dict[str, Any]
 
 
 class FileManager:
+    """
+    File manager class. Incharge of reading, writting and creating files.
+    """
 
     cwd = Path.cwd()
 
     def save_files(self, data: dicts, build: bool = False) -> None:
+        """
+        Create/Update files and save them. Also copies the asset files.
+        """
+
         tmps_path = files("minecraft-docker-cli.assets.templates")
         composer_template = tmps_path.joinpath("docker-compose.yml.j2")
         env_template = tmps_path.joinpath(".env.j2")

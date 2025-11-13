@@ -1,3 +1,6 @@
+#################################################
+# IMPORTS
+#################################################
 from __future__ import annotations
 
 from typing import Any
@@ -9,6 +12,9 @@ import psutil  # type: ignore
 from ..utils.cli import clear, confirm
 
 
+#################################################
+# CODE
+#################################################
 class Menus:
 
     def __init__(
