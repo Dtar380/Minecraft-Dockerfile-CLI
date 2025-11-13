@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import inspect
 from pathlib import Path
-from typing import Any
+from random import choice
+from typing import Any, cast
 
 from InquirerPy import inquirer  # type: ignore
 from InquirerPy.validator import EmptyInputValidator  # type: ignore
 from click import Command, Option
-from importlib_resources import files  # type: ignore
+from importlib_resources import as_file, files  # type: ignore
 from yaspin import yaspin  # type: ignore
 
 from ..core.copy_files import copy_files  # type: ignore
@@ -108,18 +109,88 @@ class Builder(CustomGroup):
             data: dicts = read_json(path) or {}
             compose: dicts = data.get("compose", {}) or {}
 
-            services: set[dicts] = set(compose.get("services", []))
-            networks: set[str] = set(compose.get("networks", []))
-            envs: set[dicts] = set(data.get("envs", []))
-
-            if networks:
-                pass
-            if envs:
-                pass
+            services: list[dicts] = compose.get("services", []) or []
+            networks: list[str] = compose.get("networks", []) or []
+            envs: list[dicts] = data.get("envs", []) or []
 
             if not services:
                 print("No services found. Use 'create' first.")
                 return
+
+            def find_index_by_name(name: str) -> int | None:
+                for i, s in enumerate(services):
+                    if s.get("name") == name:
+                        return i
+                return None
+
+            if remove:
+                target = service
+                if not target:
+                    names = [s.get("name") for s in services if s.get("name")]
+                    if not names:
+                        print("No services found.")
+                        return
+                    target = inquirer.select(  # type: ignore
+                        message="Select a service to remove: ", choices=names
+                    ).execute()
+
+                idx = find_index_by_name(target)
+                if idx is None:
+                    print(f"Service '{target}' not found.")
+                    return
+
+                if confirm(msg=f"Remove service '{target}'"):
+                    services.pop(idx)
+                    envs = [
+                        e for e in envs if e.get("CONTAINER_NAME") != target
+                    ]
+                    compose["services"] = services
+                    compose["networks"] = networks
+                    data["compose"] = compose
+                    data["envs"] = envs
+                    self.__save_files(data)
+                    print(f"Service '{target}' removed and files updated.")
+
+            elif add:
+                name = service
+                if not name:
+                    name = self.__get_name("Enter the name of the service: ")
+                if find_index_by_name(name):
+                    if not confirm(
+                        msg=f"Service '{name}' already exists. Overwrite? "
+                    ):
+                        print("Add cancelled.")
+                        return
+                    services = [s for s in services if s.get("name") != name]
+                    envs = [e for e in envs if e.get("CONTAINER_NAME") != name]
+
+                network = None
+                if networks:
+                    network = inquirer.select(  # type: ignore
+                        message="Select a network: ", choices=networks
+                    ).execute()
+                menu = Menus(network=network)
+
+                service_obj, env_obj = self.__get_data(menu, name)
+                service_obj["name"] = name
+                env_obj["CONTAINER_NAME"] = name
+
+                services.append(service_obj)
+                envs.append(env_obj)
+
+                if confirm(msg=f"Add/Update service '{name}'"):
+                    compose["services"] = services
+                    compose["networks"] = networks
+                    data["compose"] = compose
+                    data["envs"] = envs
+                    self.__save_files(data)
+                    print(f"Service '{name}' removed and files updated.")
+
+            else:
+                print("Use --add or --remove flag.")
+                print("Use --services [service] for faster output.")
+                for s in services:
+                    print(f" - {s.get("name")}")
 
         return Command(
             name=inspect.currentframe().f_code.co_name,  # type: ignore
@@ -161,19 +232,15 @@ class Builder(CustomGroup):
         )
 
     def __get_data(
-        self, menu: Menus, get_service: bool = True, get_env: bool = True
+        self, menu: Menus, name: str | None = None
     ) -> tuple[dicts, dicts]:
         clear(0.5)
 
-        name = self.__get_name(message="Enter the name of the service: ")
+        if not name:
+            name = self.__get_name(message="Enter the name of the service: ")
 
-        service = {}
-        if get_service:
-            service = menu.service(name=name)
-
-        env = {}
-        if get_env:
-            env = menu.env(name=name)
+        service = menu.service(name=name)
+        env = menu.env(name=name)
 
         return (service, env)
 
@@ -189,7 +256,7 @@ class Builder(CustomGroup):
 
         return name
 
-    @yaspin(text="Creating files...", color="cyan")
+    @yaspin(text="Saving files...", color="cyan")
     def __save_files(self, data: dicts, build: bool = False) -> None:
         tmps_path = files("minecraft-docker-cli.assets.templates")
         composer_template = tmps_path.joinpath("docker-compose.yml.j2")
@@ -199,9 +266,11 @@ class Builder(CustomGroup):
             write_json(self.cwd.joinpath("data.json"), data)
 
         composer: dicts = data.get("composer") or {}
-        template_to_file(
-            composer_template, composer, self.cwd.joinpath("docker-compose.yml")
-        )
+        with as_file(composer_template) as composer_path:  # type: ignore
+            composer_path = cast(Path, composer_path)
+            template_to_file(
+                composer_path, composer, self.cwd.joinpath("docker-compose.yml")
+            )
 
         services: list[dicts] = composer.get("services", []) or []
         names: list[str] = [service.get("name") for service in services]  # type: ignore
@@ -210,6 +279,8 @@ class Builder(CustomGroup):
         envs: list[dicts] = data.get("envs") or []
         for env in envs:
             relative_path = f"servers/{env.get("CONTAINER_NAME")}/.env"  # type: ignore
-            template_to_file(
-                env_template, env, self.cwd.joinpath(relative_path)
-            )
+            with as_file(env_template) as env_path:  # type: ignore
+                env_path = cast(Path, env_path)
+                template_to_file(
+                    env_path, env, self.cwd.joinpath(relative_path)
+                )
