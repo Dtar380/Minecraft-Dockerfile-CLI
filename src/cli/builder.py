@@ -2,18 +2,13 @@ from __future__ import annotations
 
 import inspect
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 from InquirerPy import inquirer  # type: ignore
 from InquirerPy.validator import EmptyInputValidator  # type: ignore
 from click import Command, Option
-from importlib_resources import as_file, files  # type: ignore
-from yaspin import yaspin  # type: ignore
 
-from ..core.copy_files import copy_files  # type: ignore
-from ..core.docker import ComposeManager
-from ..core.manage_json import read_json, write_json
-from ..core.manage_templates import template_to_file
+from ..core.files import FileManager
 from ..utils.cli import clear, confirm
 from .custom_group import CustomGroup
 from .menu import Menus
@@ -25,6 +20,7 @@ class Builder(CustomGroup):
 
     def __init__(self) -> None:
         super().__init__()
+        self.file_manager = FileManager()
 
     def create(self) -> Command:
         help = (
@@ -68,7 +64,7 @@ class Builder(CustomGroup):
                         break
 
             clear(0)
-            self.__save_files(
+            self.file_manager.save_files(
                 data={
                     "compose": {
                         "services": services,
@@ -107,7 +103,7 @@ class Builder(CustomGroup):
                     "ERROR: Missing JSON file for services. Use 'create' first."
                 )
 
-            data: dicts = read_json(path) or {}
+            data: dicts = self.file_manager.read_json(path) or {}
             compose: dicts = data.get("compose", {}) or {}
 
             services: list[dicts] = compose.get("services", []) or []
@@ -147,7 +143,7 @@ class Builder(CustomGroup):
                     compose["networks"] = networks
                     data["compose"] = compose
                     data["envs"] = envs
-                    self.__save_files(data)
+                    self.file_manager.save_files(data)
                     print(f"Service '{target}' removed and files updated.")
 
             elif add:
@@ -182,7 +178,7 @@ class Builder(CustomGroup):
                     compose["networks"] = networks
                     data["compose"] = compose
                     data["envs"] = envs
-                    self.__save_files(data)
+                    self.file_manager.save_files(data)
                     print(f"Service '{name}' removed and files updated.")
 
             else:
@@ -212,13 +208,13 @@ class Builder(CustomGroup):
                     "ERROR: Missing JSON file for services. Use 'create' first."
                 )
 
-            data: dicts = read_json(path) or {}
+            data: dicts = self.file_manager.read_json(path) or {}
 
             if not data:
                 exit("ERROR: JSON file is empty. Use 'create' first.")
 
             clear(0)
-            self.__save_files(data, build=True)
+            self.file_manager.save_files(data, build=True)
             clear(0)
             print("Files saved!")
 
@@ -253,32 +249,3 @@ class Builder(CustomGroup):
                 break
 
         return name
-
-    @yaspin(text="Saving files...", color="cyan")
-    def __save_files(self, data: dicts, build: bool = False) -> None:
-        tmps_path = files("minecraft-docker-cli.assets.templates")
-        composer_template = tmps_path.joinpath("docker-compose.yml.j2")
-        env_template = tmps_path.joinpath(".env.j2")
-
-        if not build:
-            write_json(self.cwd.joinpath("data.json"), data)
-
-        composer: dicts = data.get("composer") or {}
-        with as_file(composer_template) as composer_path:  # type: ignore
-            composer_path = cast(Path, composer_path)
-            template_to_file(
-                composer_path, composer, self.cwd.joinpath("docker-compose.yml")
-            )
-
-        services: list[dicts] = composer.get("services", []) or []
-        names: list[str] = [service.get("name") for service in services]  # type: ignore
-        copy_files(self.cwd, names)
-
-        envs: list[dicts] = data.get("envs") or []
-        for env in envs:
-            relative_path = f"servers/{env.get("CONTAINER_NAME")}/.env"  # type: ignore
-            with as_file(env_template) as env_path:  # type: ignore
-                env_path = cast(Path, env_path)
-                template_to_file(
-                    env_path, env, self.cwd.joinpath(relative_path)
-                )

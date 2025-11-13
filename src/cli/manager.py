@@ -7,7 +7,6 @@ from InquirerPy.validator import EmptyInputValidator  # type: ignore
 from click import Command, Option
 
 from ..core.docker import ComposeManager
-from ..utils.cli import clear, confirm  # type: ignore
 from .custom_group import CustomGroup
 
 

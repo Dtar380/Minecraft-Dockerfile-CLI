@@ -7,7 +7,7 @@ from typing import Any
 
 from yaspin import yaspin
 
-from .manage_json import read_json
+from .files import FileManager
 
 
 class ComposeManager:
@@ -18,6 +18,7 @@ class ComposeManager:
             exit(
                 "ERROR: docker-compose.yml was not located in current directory."
             )
+        self.file_manager = FileManager()
 
     def __run(
         self, *args: str, capture_output: bool = False
@@ -30,7 +31,7 @@ class ComposeManager:
             print("Command run:\n", result.stdout)
         return result
 
-    @yaspin("Building Container...")
+    @yaspin("Building Container...", color="cyan")
     def build(
         self, no_cache: bool = False, pull: bool = False
     ) -> CompletedProcess[str]:
@@ -41,35 +42,35 @@ class ComposeManager:
             args.append("--pull")
         return self.__run(*args)
 
-    @yaspin("Stopping Services...")
+    @yaspin("Stopping Services...", color="cyan")
     def stop(self) -> CompletedProcess[str]:
         return self.__run("stop")
 
-    @yaspin("Starting Services...")
+    @yaspin("Starting Services...", color="cyan")
     def start(self) -> CompletedProcess[str]:
         return self.__run("start")
 
-    @yaspin("Removing Container...")
+    @yaspin("Removing Container...", color="cyan")
     def down(self, remove_volumes: bool = False) -> CompletedProcess[str]:
         args = ["down"]
         if remove_volumes:
             args.append("-v")
         return self.__run(*args)
 
-    @yaspin("Putting Up Container...")
+    @yaspin("Putting Up Container...", color="cyan")
     def up(self, detached: bool = True) -> CompletedProcess[str]:
         args = ["up"]
         if detached:
             args.append("-d")
         return self.__run(*args)
 
-    @yaspin("Backing Up Container...")
+    @yaspin("Backing Up Container...", color="cyan")
     def back_up(self, cwd: Path = Path.cwd()) -> None:
         backup_path = cwd.joinpath(".backup")
         compose_json = cwd.joinpath("data.json")
 
         backup_path.mkdir(exist_ok=True)
-        data: dict[str, Any] = read_json(compose_json)
+        data: dict[str, Any] = self.file_manager.read_json(compose_json)
         services = data.get("composer", {}).get("services", []) or []
         names: list[str] = [svc.get("name") for svc in services if svc.get("name") is not None]  # type: ignore
         for svc_name in names:
