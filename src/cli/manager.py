@@ -6,6 +6,7 @@ from InquirerPy import inquirer  # type: ignore
 from InquirerPy.validator import EmptyInputValidator  # type: ignore
 from click import Command, Option
 
+from ..core.docker import ComposeManager
 from ..utils.cli import clear, confirm  # type: ignore
 from .custom_group import CustomGroup
 
@@ -14,6 +15,7 @@ class Manager(CustomGroup):
 
     def __init__(self) -> None:
         super().__init__()
+        self.compose_manager = ComposeManager()
 
     def backup(self) -> Command:
 
@@ -21,7 +23,7 @@ class Manager(CustomGroup):
         options = [Option()]
 
         def callback() -> None:
-            pass
+            self.compose_manager.back_up(self.cwd)
 
         return Command(
             name=inspect.currentframe().f_code.co_name,  # type: ignore
@@ -30,13 +32,27 @@ class Manager(CustomGroup):
             params=options,  # type: ignore
         )
 
-    def delete(self) -> Command:
+    def up(self) -> Command:
+        help = "Start up the container (first time start)."
+        options = [Option(["--detached"], is_flag=True, default=False)]
 
-        help = "Delete entirely the files related with the containerization of the server/network."
-        options = [Option()]
+        def callback(detached: bool = False) -> None:
+            self.compose_manager.up(detached)
 
-        def callback() -> None:
-            pass
+        return Command(
+            name=inspect.currentframe().f_code.co_name,  # type: ignore
+            help=help,
+            callback=callback,
+            params=options,  # type: ignore
+        )
+
+    def down(self) -> Command:
+
+        help = "Delete the container."
+        options = [Option(["--rm-volumes"], is_flag=True, default=True)]
+
+        def callback(rm_volumes: bool = True) -> None:
+            self.compose_manager.down(rm_volumes)
 
         return Command(
             name=inspect.currentframe().f_code.co_name,  # type: ignore
@@ -51,7 +67,7 @@ class Manager(CustomGroup):
         options = [Option()]
 
         def callback() -> None:
-            pass
+            self.compose_manager.start()
 
         return Command(
             name=inspect.currentframe().f_code.co_name,  # type: ignore
@@ -66,7 +82,7 @@ class Manager(CustomGroup):
         options = [Option()]
 
         def callback() -> None:
-            pass
+            self.compose_manager.stop()
 
         return Command(
             name=inspect.currentframe().f_code.co_name,  # type: ignore

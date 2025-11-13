@@ -6,7 +6,7 @@ from typing import Iterable
 from importlib_resources import files  # type: ignore
 
 
-def copy_files(path: Path, services: list[str] | Iterable[str]) -> None:
+def copy_files(path: Path, services: list[str]) -> None:
     # Resolve resource traversables
     docker_pkg = files("minecraft-docker-cli.assets.docker")
     dockerfile_res = docker_pkg.joinpath("Dockerfile")

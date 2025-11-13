@@ -11,6 +11,7 @@ from importlib_resources import as_file, files  # type: ignore
 from yaspin import yaspin  # type: ignore
 
 from ..core.copy_files import copy_files  # type: ignore
+from ..core.docker import ComposeManager
 from ..core.manage_json import read_json, write_json
 from ..core.manage_templates import template_to_file
 from ..utils.cli import clear, confirm
@@ -102,8 +103,9 @@ class Builder(CustomGroup):
             path: Path = self.cwd.joinpath("data.json")
 
             if not path.exists():
-                print("Missing JSON file for services. Use 'create' first.")
-                return
+                exit(
+                    "ERROR: Missing JSON file for services. Use 'create' first."
+                )
 
             data: dicts = read_json(path) or {}
             compose: dicts = data.get("compose", {}) or {}
@@ -113,8 +115,7 @@ class Builder(CustomGroup):
             envs: list[dicts] = data.get("envs", []) or []
 
             if not services:
-                print("No services found. Use 'create' first.")
-                return
+                exit("ERROR: No services found. Use 'create' first.")
 
             def find_index_by_name(name: str) -> int | None:
                 for i, s in enumerate(services):
@@ -127,16 +128,15 @@ class Builder(CustomGroup):
                 if not target:
                     names = [s.get("name") for s in services if s.get("name")]
                     if not names:
-                        print("No services found.")
-                        return
+                        exit("ERROR: No services found.")
+
                     target = inquirer.select(  # type: ignore
                         message="Select a service to remove: ", choices=names
                     ).execute()
 
-                idx = find_index_by_name(target)
+                idx = find_index_by_name(target)  # type: ignore
                 if idx is None:
-                    print(f"Service '{target}' not found.")
-                    return
+                    exit(f"ERROR: Service '{target}' not found.")
 
                 if confirm(msg=f"Remove service '{target}'"):
                     services.pop(idx)
@@ -158,8 +158,8 @@ class Builder(CustomGroup):
                     if not confirm(
                         msg=f"Service '{name}' already exists. Overwrite? "
                     ):
-                        print("Add cancelled.")
-                        return
+                        exit("ERROR: Add cancelled.")
+
                     services = [s for s in services if s.get("name") != name]
                     envs = [e for e in envs if e.get("CONTAINER_NAME") != name]
 
@@ -202,21 +202,20 @@ class Builder(CustomGroup):
         help = "Build the files for the containerization."
         options: list[Option] = []
 
-        def callback(
-            service: str | None = None, add: bool = False, remove: bool = False
-        ) -> None:
+        def callback() -> None:
             clear(0)
 
             path: Path = self.cwd.joinpath("data.json")
 
             if not path.exists():
-                print("Missing JSON file for services. Use 'create' first.")
-                return
+                exit(
+                    "ERROR: Missing JSON file for services. Use 'create' first."
+                )
 
             data: dicts = read_json(path) or {}
 
             if not data:
-                print("JSON file is empty. Use 'create' first.")
+                exit("ERROR: JSON file is empty. Use 'create' first.")
 
             clear(0)
             self.__save_files(data, build=True)
