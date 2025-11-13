@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import inspect
 from pathlib import Path
-from random import choice
 from typing import Any, cast
 
 from InquirerPy import inquirer  # type: ignore
