@@ -3,7 +3,7 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-name = "minecraft-docker-cli"
+name = "MinecraftDockerCLI"
 version = "0.1.0"
 description = "CLI tool to enhance and simplify containerization of Minecraft servers"
 readme = "README.md"
