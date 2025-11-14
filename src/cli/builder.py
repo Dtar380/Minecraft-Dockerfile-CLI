@@ -27,9 +27,7 @@ class Builder(CustomGroup):
         super().__init__()
 
     def create(self) -> Command:
-        help = (
-            "Create all files for the containerization."
-        )
+        help = "Create all files for the containerization."
         options = [Option(["--network"], is_flag=True, default=False)]
 
         def callback(network: bool = False) -> None:
@@ -39,11 +37,10 @@ class Builder(CustomGroup):
             networks: set[str] = set([])
             envs: set[dicts] = set([])
 
-
-
             if self.cwd.joinpath("data.json").exists():
                 if not confirm(
-                    msg="A data.json file was already found, want to continue? "
+                    msg="A data.json file was already found, want to continue? ",
+                    default=False,
                 ):
                     return
 
@@ -71,7 +68,7 @@ class Builder(CustomGroup):
                     clear(0.5)
 
                     if not confirm(
-                        msg=f"Want to continue adding services? (Count: {len(services)})",
+                        msg=f"Want to continue adding services? (Count: {len(services)})"
                     ):
                         break
 
@@ -146,7 +143,7 @@ class Builder(CustomGroup):
                 if idx is None:
                     exit(f"ERROR: Service '{target}' not found.")
 
-                if confirm(msg=f"Remove service '{target}'"):
+                if confirm(msg=f"Remove service '{target}'", default=False):
                     services.pop(idx)
                     envs = [
                         e for e in envs if e.get("CONTAINER_NAME") != target
@@ -250,14 +247,17 @@ class Builder(CustomGroup):
 
         return (service, env)
 
-    def __get_name(self, message: str) -> str:
+    def __get_name(self, message: str, network: bool = False) -> str:
         while True:
             clear(0.5)
             name: str = inquirer.text(  # type: ignore
                 message=message, validate=EmptyInputValidator()
             ).execute()
 
-            if confirm(msg=f"Want to name this service '{name}'? "):
+            if confirm(
+                msg=f"Want to name this {"network" if network else "service"} '{name}'? ",
+                default=True,
+            ):
                 break
 
         return name

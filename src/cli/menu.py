@@ -93,7 +93,7 @@ class Menus:
             ):
                 self.ports[port_name] = port
 
-                if confirm(msg="Want to add more ports? "):
+                if not confirm(msg="Want to add more ports? ", default=False):
                     return None
 
     def __expose(self) -> set[str]:
@@ -102,7 +102,9 @@ class Menus:
         for name, port in self.ports.items():
             clear(0.5)
 
-            if confirm(msg=f"Want to expose {name} assigned to {port}? "):
+            if confirm(
+                msg=f"Want to expose {name} assigned to {port}? ", default=False
+            ):
                 expose.add(f"${{{name}}}")
 
         return expose
@@ -116,6 +118,7 @@ class Menus:
                 min_allowed=0,
                 max_allowed=self.cpus,
                 float_allowed=True,
+                default=1,
                 validate=EmptyInputValidator(),
             ).execute()
             cpus_reservation: float = inquirer.number(  # type: ignore
@@ -123,6 +126,7 @@ class Menus:
                 min_allowed=0,
                 max_allowed=cpus_limit,
                 float_allowed=True,
+                default=cpus_limit,
                 validate=EmptyInputValidator(),
             ).execute()
 
@@ -131,6 +135,7 @@ class Menus:
                 min_allowed=0,
                 max_allowed=self.memory,
                 float_allowed=True,
+                default=512,
                 validate=EmptyInputValidator(),
             ).execute()
             memory_reservation: float = inquirer.number(  # type: ignore
@@ -138,6 +143,7 @@ class Menus:
                 min_allowed=0,
                 max_allowed=memory_limit,
                 float_allowed=True,
+                default=memory_limit,
                 validate=EmptyInputValidator(),
             ).execute()
 
@@ -176,6 +182,7 @@ class Menus:
 
             jar: str = inquirer.text(  # type: ignore
                 message="Enter your .jar file name: ",
+                default="server.jar",
                 validate=EmptyInputValidator(),
             ).execute()
 
@@ -204,6 +211,8 @@ class Menus:
                     min_allowed=self.resources["reservations"]["memory"],
                     max_allowed=self.resources["limit"]["memory"],
                     float_allowed=False,
+                    default=self.resources["reservations"]["memory"],
+                    validate=EmptyInputValidator(),
                 ).execute()
             )
 
@@ -213,6 +222,8 @@ class Menus:
                     min_allowed=min_heap_size,
                     max_allowed=self.resources["limit"]["memory"],
                     float_allowed=False,
+                    default=self.resources["limit"]["memory"],
+                    validate=EmptyInputValidator(),
                 ).execute()
             )
 

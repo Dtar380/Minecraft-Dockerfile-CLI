@@ -20,7 +20,7 @@ def clear(t: float) -> None:
     system("cls" if name == "nt" else "clear")
 
 
-def confirm(msg: str, default: bool = False) -> bool:
+def confirm(msg: str, default: bool = True) -> bool:
     """
     Ask for confirmation with custom message and default value
     """
