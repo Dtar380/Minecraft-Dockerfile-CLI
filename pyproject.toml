@@ -29,7 +29,7 @@ packages = [{ include = "src" }]
 
 [tool.poetry.urls]
 "Homepage" = "https://github.com/dtar380/Minecraft-Dockerfile-CLI"
-"Documentation" = "https://github.com/dtar380/Minecraft-Dockerfile-CLI/docs"
+"Documentation" = "https://github.com/dtar380/Minecraft-Dockerfile-CLI"
 "Repository" = "https://github.com/dtar380/Minecraft-Dockerfile-CLI"
 "Bug Tracker" = "https://github.com/Dtar380/Minecraft-Dockerfile-CLI/issues"
 
