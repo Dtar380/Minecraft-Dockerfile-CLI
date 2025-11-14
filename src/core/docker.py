@@ -43,17 +43,6 @@ class ComposeManager:
         ]
         return services
 
-    @yaspin("Building Container...", color="cyan")
-    def build(
-        self, no_cache: bool = False, pull: bool = False
-    ) -> CompletedProcess[str]:
-        args = ["build"]
-        if no_cache:
-            args.append("--no-cache")
-        if pull:
-            args.append("--pull")
-        return self.__run(*args)
-
     @yaspin("Stopping Services...", color="cyan")
     def stop(self) -> CompletedProcess[str]:
         return self.__run("stop")

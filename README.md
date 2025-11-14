@@ -1,6 +1,7 @@
-# Minecraft Docker CLI
-
-An easy and fast way to set up a Minecraft server or network using Docker containers. This repository provides a small command-line interface (CLI) to create scaffold files, build container definitions, and manage the lifecycle of your Minecraft services using Docker Compose.
+# MinecraftDockerCLI
+## Set up your Minecraft network blazingly fast
+**MinecraftDockerCLI** is a python CLI application to allow minecraft server admins to set up in a fast and easy way a server or a network using docker containers.
+**MinecraftDockerCLI** is orientated towards minecraft server admins that administrate networks, since a single server cannot fully use the advantages of Docker containers. Docker containers make minecraft networks easier and cleaner because of how docker containers work and intercomunicate on the same machine.
 
 ## **Installation**
 
@@ -38,51 +39,70 @@ poetry install
 
 ## **Usage**
 
-This project provides two main CLI areas (examples below assume running via `python -m src` or after installation via package entrypoint):
+To use this app you simply need to type `MinecraftDockerCLI` in your terminal followed by the command you want to execute and the options you want to use.
 
-- Builder commands — create and update service templates and environment files.
-- Manager commands — run, stop and manage containers.
+> [!WARNING]
+> To ensure the app runs correctly, make sure the ENV you installed the app to is activated and that you are on the folder of your server project.
 
-Common examples:
+### **Builder commands**
+Create:
+- Help: Create all files for the containerization.
+- Description: This command will ask the user with prompts everything to build a docker-compose.yml and .envs for all the services the user will run. Running this command on a existing project will overwrite the files.
+- Arguments:
+    - --network: Flag for creating network insteat of single server (required)
 
-```powershell
-# Create scaffolding for a single service (interactive)
-python -m src builder create
+Update:
+- Help: Update the contents of the containers.
+- Description: This command will either delete a service or add a service with the same method as Create.
+- Arguments:
+    - --add: Flag to state the addition of a service.
+    - --remove: Flag to state the removal of a service.
+    - --service: Parameter to specify the name of the service.
 
-# Build files from existing `data.json`
-python -m src builder build
+Build:
+- Help: Build the files for the containerization.
+- Description: This command will build the files based on `data.json` in case they were not built when running create.
 
-# Add or remove services from an existing configuration
-python -m src builder update --add --service my_service
-python -m src builder update --remove --service my_service
+> [!NOTE]
+> None of the Builder commands will build nor start the containers.
 
-# Start containers (first-time):
-python -m src manager up --detached
+### **Manager commands**
+Backup:
+- Help: Create a backup of the containers.
+- Description: This command will create a backup of every service in a tar file with the format `{service_name}_{date}.tar.gz` inside a `.backup` directory.
 
-# Stop services
-python -m src manager stop
+Up:
+- Help: Set up the containers and start them.
+- Arguments:
+    - --detached: Flat to run the containers in detached mode.
 
-# Tear down and remove volumes
-python -m src manager down --rm-volumes
+Down:
+- Help: Stop the containers and delete them.
+- Arguments:
+    - --rm-volumes: Flag to remove volumes.
 
-# Open a service terminal (interactive prompt or pass --service)
-python -m src manager open_terminal --service my_service
-```
+> [!WARNIGN]
+> Running Up will overwrite the inside volumes of the container with host ones and down with --rm-files will remove the volumes inside the containers, make sure to create a backup and replace the files on host with the backups every time.
 
-Where files are saved and read:
-- The CLI saves configuration and intermediate files to the current working directory (for example `data.json`). Keep your project folder where you run the commands.
+Start:
+- Help: Start the containers.
+- Description: This command will
 
-**Tips & Troubleshooting**
+Stop:
+- Help: Stop the containers.
+- Description: This command will
 
+## **Tips & Troubleshooting**
 - Ensure Docker Desktop is running and you can run `docker ps` without errors before invoking the CLI.
 - On Windows, run PowerShell as Administrator or ensure your user has permissions for Docker.
-- If interactive prompts fail, confirm `InquirerPy` was installed (`pip install InquirerPy`).
 - If `data.json` is missing, run `builder create` first to scaffold services.
 
-**Contributing**
+## **Kown Issues**
+There is no known issues on the project, you can submit yours to [issues](https://github.com/Dtar380/MinecraftDockerCLI/issues/new/choose).
 
-Contributions are welcome. Please open issues for bugs or feature requests, and submit pull requests for fixes or enhancements.
+## **License**
+This project is distributed under the MIT license.
+See the [LICENSE](LICENSE).
 
-**License**
-
-This project is licensed under the terms in the `LICENSE` file in the repository root.
+## **Sponsorship**
+You can support me and the project with a donation to my Ko-Fi.

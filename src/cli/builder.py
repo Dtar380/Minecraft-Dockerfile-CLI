@@ -39,6 +39,14 @@ class Builder(CustomGroup):
             networks: set[str] = set([])
             envs: set[dicts] = set([])
 
+
+
+            if self.cwd.joinpath("data.json").exists():
+                if not confirm(
+                    msg="A data.json file was already found, want to continue? "
+                ):
+                    return
+
             if not network:
                 menu = Menus()
                 service, env = self.__get_data(menu)

@@ -50,7 +50,7 @@ class Manager(CustomGroup):
         )
 
     def up(self) -> Command:
-        help = "Start up the container (first time start)."
+        help = "Start up the containers after changes."
         options = [Option(["--detached"], is_flag=True, default=False)]
 
         def callback(detached: bool = False) -> None:
@@ -65,7 +65,7 @@ class Manager(CustomGroup):
 
     def down(self) -> Command:
 
-        help = "Delete the container."
+        help = "Delete the containers."
         options = [Option(["--rm-volumes"], is_flag=True, default=True)]
 
         def callback(rm_volumes: bool = True) -> None:
@@ -80,7 +80,7 @@ class Manager(CustomGroup):
 
     def start(self) -> Command:
 
-        help = "Start the services."
+        help = "Start the containers."
         options: list[Option] = []
 
         def callback() -> None:
@@ -95,7 +95,7 @@ class Manager(CustomGroup):
 
     def stop(self) -> Command:
 
-        help = "Stop the services."
+        help = "Stop the containers."
         options: list[Option] = []
 
         def callback() -> None:
