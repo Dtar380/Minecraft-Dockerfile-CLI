@@ -7,9 +7,8 @@ import inspect
 
 from InquirerPy import inquirer  # type: ignore
 from InquirerPy.validator import EmptyInputValidator  # type: ignore
-from click import Command, Option
+from click import Choice, Command, Option
 
-from ..core.docker import ComposeManager
 from .custom_group import CustomGroup
 
 
@@ -20,7 +19,20 @@ class Manager(CustomGroup):
 
     def __init__(self) -> None:
         super().__init__()
-        self.compose_manager = ComposeManager()
+
+    def open_terminal(self) -> Command:
+        help = "Open the terminal of a service."
+        options = [Option(["--service"], type=self.service_type, default=None)]
+
+        def callback(service: str) -> None:
+            self.compose_manager.open_terminal(service)
+
+        return Command(
+            name=inspect.currentframe().f_code.co_name,  # type: ignore
+            help=help,
+            callback=callback,
+            params=options,  # type: ignore
+        )
 
     def backup(self) -> Command:
 

@@ -3,11 +3,12 @@
 #################################################
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
-from importlib_resources import files  # type: ignore
 from InquirerPy import inquirer  # type: ignore
 from InquirerPy.validator import EmptyInputValidator  # type: ignore
+from importlib_resources import files  # type: ignore
 import psutil  # type: ignore
 
 from ..utils.cli import clear, confirm
@@ -183,15 +184,15 @@ class Menus:
 
         return jar
 
-    def __use_args(self) -> str:
+    def __use_args(self) -> str | None:
         clear(0.5)
 
         if confirm(msg="Want to use recommended args for the server? "):
-            txt_file = files("minecraft-docker-cli.assets.config").joinpath("recomended-args.txt")
-            with open(txt_file, "r+") as f:
+            txt_file = Path(files("minecraft-docker-cli.assets.config").joinpath("recommended-args.txt"))  # type: ignore
+            with open(txt_file, "r+") as f:  # type: ignore
                 data = f.readlines()
             return " ".join(data)
-        return ""
+        return None
 
     def __get_heaps(self) -> list[str]:
         while True:

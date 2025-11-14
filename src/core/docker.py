@@ -3,8 +3,9 @@
 #################################################
 from __future__ import annotations
 
+from gzip import GzipFile
 from pathlib import Path
-from subprocess import CompletedProcess, run
+from subprocess import PIPE, CalledProcessError, CompletedProcess, run
 from time import strftime
 from typing import Any
 
@@ -36,6 +37,15 @@ class ComposeManager:
         else:
             print("Command run:\n", result.stdout)
         return result
+
+    def get_services(self) -> list[str]:
+        result = self.__run("config", "--services", capture_output=True)
+        if result.returncode != 0:
+            return []
+        services = [
+            line.strip() for line in result.stdout.splitlines() if line.strip()
+        ]
+        return services
 
     @yaspin("Building Container...", color="cyan")
     def build(
@@ -77,25 +87,33 @@ class ComposeManager:
 
         backup_path.mkdir(exist_ok=True)
         data: dict[str, Any] = self.file_manager.read_json(compose_json)
-        services = data.get("composer", {}).get("services", []) or []
+        services = data.get("composer", {}).get("services", []) or []  # type: ignore
         names: list[str] = [svc.get("name") for svc in services if svc.get("name") is not None]  # type: ignore
         for svc_name in names:
-            container_path = svc_name
             tar_file = backup_path.joinpath(
                 f"{svc_name}_{strftime("%d-%m-%Y_%H:%M:%S")}.tar.gz"
             )
             container_name = self.__get_container_name(svc_name)
-            if container_name:
-                run(
+            if not container_name:
+                continue
+
+            path_inside = f"/{svc_name}"
+            with open(tar_file, "wb") as f:
+                proc = run(
                     [
                         "docker",
-                        "compose",
-                        "cp",
-                        f"{container_name}:{container_path}",
-                        tar_file,
+                        "exec",
+                        container_name,
+                        "tar",
+                        "-C",
+                        path_inside,
+                        "-cv",
+                        ".",
                     ],
-                    check=True,
+                    stdout=PIPE,
                 )
+                with GzipFile(fileobj=f, mode="wb") as gz:
+                    gz.write(proc.stdout)
 
     def __get_container_name(self, service_name: str) -> str | None:
         result = self.__run("ps", capture_output=True)
@@ -104,3 +122,20 @@ class ComposeManager:
             if service_name in line:
                 return line.split()[0]
         return None
+
+    def open_terminal(self, service: str) -> None:
+        container = self.__get_container_name(service)
+        if not container:
+            print(f"Service: '{service}' not found.")
+            return
+        for shell in ("/bin/bash", "/bin/sh"):
+            cmd = ["docker", "exec", "-it", container, shell]
+            try:
+                run(cmd, text=True)
+                return
+            except CalledProcessError:
+                continue
+            except Exception:
+                continue
+
+        print("Couldn't open a shell in the container")

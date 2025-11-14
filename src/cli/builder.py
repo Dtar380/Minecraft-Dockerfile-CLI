@@ -11,7 +11,6 @@ from InquirerPy import inquirer  # type: ignore
 from InquirerPy.validator import EmptyInputValidator  # type: ignore
 from click import Command, Option
 
-from ..core.files import FileManager
 from ..utils.cli import clear, confirm
 from .custom_group import CustomGroup
 from .menu import Menus
@@ -26,7 +25,6 @@ class Builder(CustomGroup):
 
     def __init__(self) -> None:
         super().__init__()
-        self.file_manager = FileManager()
 
     def create(self) -> Command:
         help = (
@@ -92,7 +90,7 @@ class Builder(CustomGroup):
     def update(self) -> Command:
         help = "Update the contents of the containers."
         options = [
-            Option(["--service"], default=None),
+            Option(["--service"], type=self.service_type, default=None),
             Option(["--add"], is_flag=True, default=False),
             Option(["--remove"], is_flag=True, default=False),
         ]
