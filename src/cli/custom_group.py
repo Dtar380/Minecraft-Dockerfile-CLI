@@ -6,6 +6,7 @@ from __future__ import annotations
 import inspect
 from pathlib import Path
 from typing import Any
+import traceback
 
 from click import Choice, Command, Group
 
@@ -57,15 +58,23 @@ class CustomGroup(Group):
         self.__register_commands()
 
     def __register_commands(self) -> None:
-        for name, method in inspect.getmembers(
-            self, predicate=inspect.ismethod
+        # Iterate only functions declared on the subclass (avoid inherited click methods)
+        for name, func in inspect.getmembers(
+            self.__class__, predicate=inspect.isfunction
         ):
             if name.startswith("_"):
                 continue
 
+            # Skip methods not defined on this exact class (i.e., inherited ones)
+            if not func.__qualname__.startswith(self.__class__.__name__ + "."):
+                continue
+
+            method = getattr(self, name)
             try:
                 result = method()
-            except Exception:
+            except Exception as e:
+                print(f"Error registering command '{name}': {e}")
+                traceback.print_exc()
                 continue
 
             if isinstance(result, Command):

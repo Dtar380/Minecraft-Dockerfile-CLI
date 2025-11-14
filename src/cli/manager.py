@@ -36,8 +36,8 @@ class Manager(CustomGroup):
 
     def backup(self) -> Command:
 
-        help = "Create a backup of the files inside the containers to their respective build directories."
-        options = [Option()]
+        help = "Create a backup of the containers."
+        options: list[Option] = []
 
         def callback() -> None:
             self.compose_manager.back_up(self.cwd)
@@ -81,7 +81,7 @@ class Manager(CustomGroup):
     def start(self) -> Command:
 
         help = "Start the services."
-        options = [Option()]
+        options: list[Option] = []
 
         def callback() -> None:
             self.compose_manager.start()
@@ -96,7 +96,7 @@ class Manager(CustomGroup):
     def stop(self) -> Command:
 
         help = "Stop the services."
-        options = [Option()]
+        options: list[Option] = []
 
         def callback() -> None:
             self.compose_manager.stop()

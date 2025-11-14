@@ -28,7 +28,7 @@ class Builder(CustomGroup):
 
     def create(self) -> Command:
         help = (
-            "Create all files for the containerization of the server/network."
+            "Create all files for the containerization."
         )
         options = [Option(["--network"], is_flag=True, default=False)]
 
@@ -189,7 +189,7 @@ class Builder(CustomGroup):
                 print("Use --add or --remove flag.")
                 print("Use --services [service] for faster output.")
                 for s in services:
-                    print(f" - {s.get("name")}")
+                    print(f" - {s.get('name')}")
 
         return Command(
             name=inspect.currentframe().f_code.co_name,  # type: ignore
