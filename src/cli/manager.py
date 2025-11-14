@@ -7,7 +7,7 @@ import inspect
 
 from InquirerPy import inquirer  # type: ignore
 from InquirerPy.validator import EmptyInputValidator  # type: ignore
-from click import Choice, Command, Option
+from click import Command, Option
 
 from .custom_group import CustomGroup
 
