@@ -59,7 +59,7 @@ sphinx-rtd-theme = "^3.0.2"
 myst-parser = "^4.0.1"
 
 [tool.poetry.scripts]
-minecraft-docker-cli = "src.__main__:main"
+MinecraftDockerCLI = "src.__main__:main"
 
 # Tareas de desarrollo con poethepoet
 [tool.poe.tasks]

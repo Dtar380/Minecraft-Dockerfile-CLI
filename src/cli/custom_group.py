@@ -24,8 +24,8 @@ class CustomGroup(Group):
 
     def __init__(self) -> None:
         super().__init__()
-        self.compose_manager = ComposeManager()
         self.file_manager = FileManager()
+        self.compose_manager = ComposeManager()
 
         try:
             services = self.compose_manager.get_services()
@@ -35,7 +35,7 @@ class CustomGroup(Group):
         if not services:
             try:
                 data: dicts = (
-                    self.file_manager.read_json(self.cwd.joinpath("data.sjon"))
+                    self.file_manager.read_json(self.cwd.joinpath("data.json"))
                     or {}
                 )
                 compose: dicts = data.get("compose", {}) or {}

@@ -21,25 +21,21 @@ class ComposeManager:
 
     def __init__(self) -> None:
         self.composer_file = Path.cwd().joinpath("docker-compose.yml")
-        if not self.composer_file.exists():
-            exit(
-                "ERROR: docker-compose.yml was not located in current directory."
-            )
         self.file_manager = FileManager()
 
     def __run(
-        self, *args: str, capture_output: bool = False
+        self, *args: str, capture_output: bool = False, print_output: bool = True
     ) -> CompletedProcess[str]:
         command = ["docker", "compose", "-f", str(self.composer_file), *args]
         result = run(command, text=True, capture_output=capture_output)
-        if result.returncode != 0:
-            print("ERROR:\n", result.stderr)
-        else:
-            print("Command run:\n", result.stdout)
+        if result.returncode != 0 and print_output:
+            print("ERROR: ", result.stderr)
+        elif print_output:
+            print("Command run: ", result.stdout)
         return result
 
     def get_services(self) -> list[str]:
-        result = self.__run("config", "--services", capture_output=True)
+        result = self.__run("config", "--services", capture_output=True, print_output=False)
         if result.returncode != 0:
             return []
         services = [
