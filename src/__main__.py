@@ -14,12 +14,6 @@ from .cli.manager import Manager
 # CODE
 #################################################
 class TopGroup(Group):
-    """Custom top-level Group that formats commands grouped by their source.
-
-    Commands will be shown under headings like 'Builder' and 'Manager' in
-    the help output while remaining top-level (no subgroup invocation
-    required to run them).
-    """
 
     def format_commands(self, ctx: Context, formatter: HelpFormatter) -> None:
         # Build a mapping source -> list[(name, help)]

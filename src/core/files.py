@@ -21,7 +21,7 @@ dicts = dict[str, Any]
 
 class FileManager:
     """
-    File manager class. Incharge of reading, writting and creating files.
+    File manager class. In charge of reading, writting and creating files.
     """
 
     cwd = Path.cwd()

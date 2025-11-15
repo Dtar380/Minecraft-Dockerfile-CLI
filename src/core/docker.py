@@ -19,6 +19,10 @@ from .files import FileManager
 #################################################
 class ComposeManager:
 
+    """
+    Compose manager class. In charge of executing docker commands.
+    """
+
     def __init__(self) -> None:
         self.composer_file = Path.cwd().joinpath("docker-compose.yml")
         self.file_manager = FileManager()
