@@ -54,7 +54,7 @@ services:
 {% endfor %}
 
 networks:
-{% for net_name in networks}
+{% for net_name in networks %}
   {{ net_name }}:
     driver: bridge
 {% endfor %}

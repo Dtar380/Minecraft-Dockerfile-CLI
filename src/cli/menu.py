@@ -3,6 +3,7 @@
 #################################################
 from __future__ import annotations
 
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
@@ -26,7 +27,7 @@ class Menus:
         self.update = update
 
         self.cpus: float = psutil.cpu_count(logical=True) or 0
-        self.memory: float = (
+        self.memory: int = (
             psutil.virtual_memory().available // 1024**2 - 512 or 0
         )
 
@@ -35,16 +36,16 @@ class Menus:
 
         if self.memory < 512:
             print("WARNING: RAM AMOUNT TOO LOW")
-        clear(2)
+        clear(1)
 
     # Construct service contents for docker-compose
     def service(self, name: str) -> dict[str, Any]:
         self.__get_ports()
         expose = self.__expose()
-        not_exposed = set([port for port in self.ports if port not in expose])
-        ports = set([f"${{{port}}}:${{{port}}}" for port in not_exposed])
+        not_exposed = [port for port in self.ports if port not in expose]
+        ports = [f"${{{port}}}:${{{port}}}" for port in not_exposed]
         self.__resources()
-        resources = self.resources
+        resources = deepcopy(self.resources)
 
         resources["limits"]["memory"] = (
             str(resources["limits"]["memory"] / 1024) + "g"
@@ -65,7 +66,7 @@ class Menus:
         if expose:
             service["expose"] = expose  # type: ignore
         if self.network:
-            service["networks"] = self.network
+            service["networks"] = [self.network]
         if resources:
             service["resources"] = resources
 
@@ -96,16 +97,16 @@ class Menus:
                 if not confirm(msg="Want to add more ports? ", default=False):
                     return None
 
-    def __expose(self) -> set[str]:
-        expose: set[str] = set()
+    def __expose(self) -> list[str]:
+        clear(0.5)
 
+        expose: list[str] = []
         for name, port in self.ports.items():
-            clear(0.5)
 
             if confirm(
                 msg=f"Want to expose {name} assigned to {port}? ", default=False
             ):
-                expose.add(f"${{{name}}}")
+                expose.append(f"${{{name}}}")
 
         return expose
 
@@ -113,39 +114,43 @@ class Menus:
         while True:
             clear(0.5)
 
-            cpus_limit: float = inquirer.number(  # type: ignore
-                message="Select a limit of CPUs for this service: ",
-                min_allowed=0,
-                max_allowed=self.cpus,
-                float_allowed=True,
-                default=1,
-                validate=EmptyInputValidator(),
-            ).execute()
-            cpus_reservation: float = inquirer.number(  # type: ignore
-                message="Select a CPUs allocation for this service: ",
-                min_allowed=0,
-                max_allowed=cpus_limit,
-                float_allowed=True,
-                default=cpus_limit,
-                validate=EmptyInputValidator(),
-            ).execute()
+            cpus_limit: float = float(
+                inquirer.number(  # type: ignore
+                    message="Select a limit of CPUs for this service: ",
+                    min_allowed=0,
+                    max_allowed=self.cpus,
+                    float_allowed=True,
+                    validate=EmptyInputValidator(),
+                ).execute()
+            )
+            cpus_reservation: float = float(
+                inquirer.number(  # type: ignore
+                    message="Select a CPUs allocation for this service: ",
+                    min_allowed=0,
+                    max_allowed=cpus_limit,
+                    float_allowed=True,
+                    validate=EmptyInputValidator(),
+                ).execute()
+            )
 
-            memory_limit: float = inquirer.number(  # type: ignore
-                message="Select a limit of RAM for this service (in MB): ",
-                min_allowed=0,
-                max_allowed=self.memory,
-                float_allowed=True,
-                default=512,
-                validate=EmptyInputValidator(),
-            ).execute()
-            memory_reservation: float = inquirer.number(  # type: ignore
-                message="Select a RAM allocation for this service (in MB): ",
-                min_allowed=0,
-                max_allowed=memory_limit,
-                float_allowed=True,
-                default=memory_limit,
-                validate=EmptyInputValidator(),
-            ).execute()
+            memory_limit: int = int(
+                inquirer.number(  # type: ignore
+                    message="Select a limit of RAM for this service (in MB): ",
+                    min_allowed=0,
+                    max_allowed=self.memory,
+                    float_allowed=False,
+                    validate=EmptyInputValidator(),
+                ).execute()
+            )
+            memory_reservation: int = int(
+                inquirer.number(  # type: ignore
+                    message="Select a RAM allocation for this service (in MB): ",
+                    min_allowed=0,
+                    max_allowed=memory_limit,
+                    float_allowed=False,
+                    validate=EmptyInputValidator(),
+                ).execute()
+            )
 
             if confirm(
                 msg="Confirm the RAM and CPU allocation for this service."
@@ -195,10 +200,10 @@ class Menus:
         clear(0.5)
 
         if confirm(msg="Want to use recommended args for the server? "):
-            txt_file = Path(files("minecraft-docker-cli.assets.config").joinpath("recommended-args.txt"))  # type: ignore
+            txt_file = Path(files("src.assets.config").joinpath("recommended-args.txt"))  # type: ignore
             with open(txt_file, "r+") as f:  # type: ignore
                 data = f.readlines()
-            return " ".join(data)
+            return " ".join(data).replace("\n", "")
         return None
 
     def __get_heaps(self) -> list[str]:
@@ -209,7 +214,7 @@ class Menus:
                 inquirer.number(  # type: ignore
                     message="Select the minimum heap size: ",
                     min_allowed=self.resources["reservations"]["memory"],
-                    max_allowed=self.resources["limit"]["memory"],
+                    max_allowed=self.resources["limits"]["memory"],
                     float_allowed=False,
                     default=self.resources["reservations"]["memory"],
                     validate=EmptyInputValidator(),
@@ -218,11 +223,11 @@ class Menus:
 
             max_heap_size: int = int(
                 inquirer.number(  # type: ignore
-                    message="Select the minimum heap size: ",
+                    message="Select the maximum heap size: ",
                     min_allowed=min_heap_size,
-                    max_allowed=self.resources["limit"]["memory"],
+                    max_allowed=self.resources["limits"]["memory"],
                     float_allowed=False,
-                    default=self.resources["limit"]["memory"],
+                    default=self.resources["limits"]["memory"],
                     validate=EmptyInputValidator(),
                 ).execute()
             )

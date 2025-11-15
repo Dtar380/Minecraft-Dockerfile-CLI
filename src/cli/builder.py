@@ -33,9 +33,9 @@ class Builder(CustomGroup):
         def callback(network: bool = False) -> None:
             clear(0)
 
-            services: set[dicts] = set([])
-            networks: set[str] = set([])
-            envs: set[dicts] = set([])
+            services: dict[str, dicts] = {}
+            networks: dict[str, str] = {}
+            envs: dict[str, dicts] = {}
 
             if self.cwd.joinpath("data.json").exists():
                 if not confirm(
@@ -47,14 +47,15 @@ class Builder(CustomGroup):
             if not network:
                 menu = Menus()
                 service, env = self.__get_data(menu)
-                services.add(service)
-                envs.add(env)
+                name: str = service.get("name")  # type: ignore
+                services[name] = service
+                envs[name] = env
 
             else:
                 network_name = self.__get_name(
-                    message="Enter the name of the network: "
+                    message="Enter the name of the network: ", network=True
                 )
-                networks.add(network_name)
+                networks[network_name] = network_name
 
                 menu = Menus(network=network_name)
 
@@ -62,8 +63,9 @@ class Builder(CustomGroup):
                     menu.ports = {}
 
                     service, env = self.__get_data(menu)
-                    services.add(service)
-                    envs.add(env)
+                    name: str = service.get("name")  # type: ignore
+                    services[name] = service
+                    envs[name] = env
 
                     clear(0.5)
 
@@ -72,14 +74,18 @@ class Builder(CustomGroup):
                     ):
                         break
 
+            services_list = [svc for _, svc in services.items()]
+            networks_list = [net for _, net in networks.items()]
+            envs_list = [env for _, env in envs.items()]
+
             clear(0)
             self.file_manager.save_files(
                 data={
                     "compose": {
-                        "services": services,
-                        "networks": networks,
+                        "services": services_list,
+                        "networks": networks_list,
                     },
-                    "envs": envs,
+                    "envs": envs_list,
                 }
             )
             clear(0)
@@ -115,15 +121,23 @@ class Builder(CustomGroup):
             data: dicts = self.file_manager.read_json(path) or {}
             compose: dicts = data.get("compose", {}) or {}
 
-            services: list[dicts] = compose.get("services", []) or []
-            networks: list[str] = compose.get("networks", []) or []
-            envs: list[dicts] = data.get("envs", []) or []
+            services_list: list[dicts] = compose.get("services", []) or []
+            networks_list: list[str] = compose.get("networks", []) or []
+            envs_list: list[dicts] = data.get("envs", []) or []
+
+            services: dict[Any, dicts] = {
+                svc.get("name"): svc for svc in services_list
+            }
+            networks: dict[str, str] = {net: net for net in networks_list}
+            envs: dict[Any, dicts] = {
+                env.get("CONTAINER_NAME"): env for env in envs_list
+            }
 
             if not services:
                 exit("ERROR: No services found. Use 'create' first.")
 
             def find_index_by_name(name: str) -> int | None:
-                for i, s in enumerate(services):
+                for i, s in enumerate(services_list):
                     if s.get("name") == name:
                         return i
                 return None
@@ -131,7 +145,9 @@ class Builder(CustomGroup):
             if remove:
                 target = service
                 if not target:
-                    names = [s.get("name") for s in services if s.get("name")]
+                    names = [
+                        s.get("name") for s in services_list if s.get("name")
+                    ]
                     if not names:
                         exit("ERROR: No services found.")
 
@@ -144,14 +160,16 @@ class Builder(CustomGroup):
                     exit(f"ERROR: Service '{target}' not found.")
 
                 if confirm(msg=f"Remove service '{target}'", default=False):
-                    services.pop(idx)
-                    envs = [
-                        e for e in envs if e.get("CONTAINER_NAME") != target
+                    services_list.pop(idx)
+                    envs_list = [
+                        e
+                        for e in envs_list
+                        if e.get("CONTAINER_NAME") != target
                     ]
-                    compose["services"] = services
-                    compose["networks"] = networks
+                    compose["services"] = services_list
+                    compose["networks"] = networks_list
                     data["compose"] = compose
-                    data["envs"] = envs
+                    data["envs"] = envs_list
                     self.file_manager.save_files(data)
                     print(f"Service '{target}' removed and files updated.")
 
@@ -165,13 +183,10 @@ class Builder(CustomGroup):
                     ):
                         exit("ERROR: Add cancelled.")
 
-                    services = [s for s in services if s.get("name") != name]
-                    envs = [e for e in envs if e.get("CONTAINER_NAME") != name]
-
                 network = None
                 if networks:
                     network = inquirer.select(  # type: ignore
-                        message="Select a network: ", choices=networks
+                        message="Select a network: ", choices=networks_list
                     ).execute()
                 menu = Menus(network=network)
 
@@ -179,14 +194,18 @@ class Builder(CustomGroup):
                 service_obj["name"] = name
                 env_obj["CONTAINER_NAME"] = name
 
-                services.append(service_obj)
-                envs.append(env_obj)
+                services[name] = service_obj
+                envs[name] = env_obj
 
                 if confirm(msg=f"Add/Update service '{name}'"):
-                    compose["services"] = services
-                    compose["networks"] = networks
+                    services_list = [svc for _, svc in services.items()]
+                    networks_list = [net for _, net in networks.items()]
+                    envs_list = [env for _, env in envs.items()]
+
+                    compose["services"] = services_list
+                    compose["networks"] = networks_list
                     data["compose"] = compose
-                    data["envs"] = envs
+                    data["envs"] = envs_list
                     self.file_manager.save_files(data)
                     print(f"Service '{name}' removed and files updated.")
 

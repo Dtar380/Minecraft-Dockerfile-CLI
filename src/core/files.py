@@ -5,10 +5,12 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from shutil import copyfileobj
 from typing import Any, cast
 
 from importlib_resources import as_file, files  # type: ignore
 import jinja2
+import requests  # type: ignore
 from yaspin import yaspin  # type: ignore
 
 #################################################
@@ -29,32 +31,34 @@ class FileManager:
         Create/Update files and save them. Also copies the asset files.
         """
 
-        tmps_path = files("minecraft-docker-cli.assets.templates")
+        tmps_path = files("src.assets.templates")
         composer_template = tmps_path.joinpath("docker-compose.yml.j2")
         env_template = tmps_path.joinpath(".env.j2")
 
         if not build:
             self.write_json(self.cwd.joinpath("data.json"), data)
 
-        composer: dicts = data.get("composer") or {}
+        compose: dicts = data.get("compose") or {}
         with as_file(composer_template) as composer_tmp:  # type: ignore
             composer_tmp = cast(Path, composer_tmp)
             self.template_to_file(
-                composer_tmp, composer, self.cwd.joinpath("docker-compose.yml")
+                composer_tmp, compose, self.cwd.joinpath("docker-compose.yml")
             )
 
-        services: list[dicts] = composer.get("services", []) or []
+        services: list[dicts] = compose.get("services", []) or []
         names: list[str] = [service.get("name") for service in services]  # type: ignore
         self.copy_files(self.cwd, names)
 
         envs: list[dicts] = data.get("envs") or []
         for env in envs:
-            relative_path = f"servers/{env.get("CONTAINER_NAME")}/.env"  # type: ignore
+            relative_path = f"servers/{env.get('CONTAINER_NAME')}/.env"  # type: ignore
             with as_file(env_template) as env_tmp:  # type: ignore
                 env_tmp = cast(Path, env_tmp)
                 self.template_to_file(
                     env_tmp, env, self.cwd.joinpath(relative_path)
                 )
+
+        self.cwd.joinpath(".backup").mkdir(exist_ok=True)
 
     @yaspin("Reading JSON...", color="cyan")
     def read_json(self, file: Path) -> dict[Any, Any]:
@@ -71,13 +75,12 @@ class FileManager:
 
     @yaspin("Copying files...", color="cyan")
     def copy_files(self, path: Path, services: list[str]) -> None:
-        docker_pkg = files("minecraft-docker-cli.assets.docker")
+        docker_pkg = files("src.assets.docker")
         dockerfile_res = docker_pkg.joinpath("Dockerfile")
         dockerignore_res = docker_pkg.joinpath(".dockerignore")
-        runsh_res = files("minecraft-docker-cli.assets.scripts").joinpath(
-            "run.sh"
-        )
-        readme_res = files("minecraft-docker-cli.assets").joinpath("README.md")
+        runsh_res = files("src.assets.scripts").joinpath("run.sh")
+        readme_res = files("src.assets").joinpath("README.md")
+        eula_res = files("src.assets.config").joinpath("eula.txt")
 
         # Ensure base path exists
         if not path.exists():
@@ -88,6 +91,7 @@ class FileManager:
         dockerignore_bytes = dockerignore_res.read_bytes()
         runsh_bytes = runsh_res.read_bytes()
         readme_bytes = readme_res.read_bytes()
+        eula_bytes = eula_res.read_bytes()
 
         # Write files for each service
         for service in services:
@@ -97,9 +101,65 @@ class FileManager:
             (dest_dir / "Dockerfile").write_bytes(dockerfile_bytes)
             (dest_dir / ".dockerignore").write_bytes(dockerignore_bytes)
             (dest_dir / "run.sh").write_bytes(runsh_bytes)
+            (dest_dir / "eula.txt").write_bytes(eula_bytes)
+
+            if "proxy" in service.lower():
+                plugins = dest_dir.joinpath("plugins")
+                plugins.mkdir(exist_ok=True)
+                self.__download_proxy(dest_dir)
 
         # Write top-level README into the given path
         (path / "README.md").write_bytes(readme_bytes)
+
+    def __download_proxy(self, path: Path) -> None:
+        api = "https://fill.papermc.io/v3/projects/velocity"
+
+        ver_resp = requests.get(api)
+        versions = ver_resp.json()
+        if not versions:
+            return
+        try:
+            version = list(versions.get("versions").values())[0][0]
+        except Exception:
+            return
+
+        builds_resp = requests.get(f"{api}/versions/{version}")
+        builds = builds_resp.json()
+        if not builds:
+            return
+        try:
+            build = list(builds.get("builds"))[0]
+        except Exception:
+            return
+
+        final_resp = requests.get(f"{api}/versions/{version}/builds/{build}")
+        final = final_resp.json()
+        if not final:
+            return
+        try:
+            downloads = final.get("downloads")
+            if "server:default" in downloads:
+                download_url = downloads["server:default"].get("url")
+            else:
+                return
+        except Exception:
+            return
+
+        if not download_url:
+            return
+
+        out_path = path.joinpath("proxy.jar")
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        with requests.get(download_url, stream=True) as r:
+            r.raise_for_status()
+            with open(out_path, "wb") as f:
+                copyfileobj(r.raw, f)
+        try:
+            (path / "proxy_ver.txt").write_text(
+                f"velocity-{version}-{build}.jar"
+            )
+        except Exception:
+            return
 
     @yaspin("Rendering template...", color="cyan")
     def template_to_file(
@@ -114,7 +174,9 @@ class FileManager:
         self, template_path: Path, context: dict[Any, Any]
     ) -> str:
         env = jinja2.Environment(
-            loader=jinja2.FileSystemLoader(str(template_path.parent))
+            loader=jinja2.FileSystemLoader(str(template_path.parent)),
+            trim_blocks=True,
+            lstrip_blocks=True,
         )
         template_obj = env.get_template(template_path.name)
         return template_obj.render(**context)
