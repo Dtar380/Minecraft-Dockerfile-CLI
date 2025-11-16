@@ -90,7 +90,7 @@ Down:
 - Arguments:
     - --rm-volumes: Flag to remove volumes.
 
-> [!WARNIGN]
+> [!WARNING]
 > Running Up will overwrite the inside volumes of the container with host ones and down with --rm-files will remove the volumes inside the containers, make sure to create a backup and replace the files on host with the backups every time.
 
 Start:
